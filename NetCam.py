@@ -80,8 +80,6 @@ class NetCam:
         self.videothread.start()
 
     def stopCapture(self):
-        if self.videothread != None:
-            self.videothread.join()
         if self.videoStream and self.videoStream.isOpened():
             self.videoStream.release()
         self.isRunning = False
@@ -139,9 +137,6 @@ class NetCam:
 
     def stopServer(self):
         self.isRunning = False
-        if self.workerThread:
-            for worker in self.workerThread:
-                worker.join()
         if self.clients != None:
             self.clients.close()
         if self.workers != None:
