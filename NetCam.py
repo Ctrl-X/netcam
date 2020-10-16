@@ -152,7 +152,7 @@ class NetCam:
         print(f'Connected To {url_publisher}')
         print('self.isRunning',self.isRunning)
         while self.isRunning:
-            result = socket.recv()
+            result = socket.recv_string()
             print('received', result)
             time.sleep(000.1)
 
