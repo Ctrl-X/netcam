@@ -108,10 +108,11 @@ class NetCam:
         socket.bind(url_publish)
         print('Starting publishing video on ', url_publish)
 
+        i = 0
         while self.isRunning:
             if self.displayDebug:
                 self.networkFps.compute()
-            socket.send(self.imgBuffer)
+            socket.send(i)
             time.sleep(0.001)
 
 
@@ -151,8 +152,8 @@ class NetCam:
         print(f'Connected To {url_publisher}')
         print('self.isRunning',self.isRunning)
         while self.isRunning:
-            print('received')
-            self.imgBuffer = socket.recv()
+            result = socket.recv()
+            print('received', result)
             time.sleep(000.1)
 
     # def connectionListener2(self, workerUrl, zmqContext = None):
@@ -234,7 +235,7 @@ class NetCam:
             self.displayWidth, self.displayHeight = resolutionFinder(resolution, self.isStereoCam)
 
 
-    def toggleFullSreen(self):
+    def toggleFullScreen(self):
         self.fullScreen = not self.fullScreen
 
 
