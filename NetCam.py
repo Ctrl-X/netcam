@@ -48,6 +48,7 @@ class NetCam:
         self.displayDebug = False
         self.displayFps = FpsCatcher()
         self.captureFps = FpsCatcher()
+        self.networkFps = FpsCatcher()
 
         ## Server Information
         self.workerThread = []
@@ -103,10 +104,15 @@ class NetCam:
             Publish Data to any connected Server
         :param socket:
         """
-        socket.bind("tcp://*:%s" % NetCam.DEFAULT_CLIENT_PORT)
+        url_publish = "tcp://*:%s" % NetCam.DEFAULT_CLIENT_PORT
+        socket.bind(url_publish)
+        print('Starting publishing video on ', url_publish)
+
         while self.isRunning:
+            if self.displayDebug:
+                self.networkFps.compute()
             socket.send(self.imgBuffer)
-            time.sleep(1)
+            time.sleep(0.001)
 
 
     def startServer(self):
@@ -137,7 +143,8 @@ class NetCam:
         #
         # zmq.device(zmq.QUEUE, self.clients, self.workers)
 
-    def stopServer(self):
+    def clearAll(self):
+        self.stopCapture()
         self.isRunning = False
         if self.workerThread:
             for worker in self.workerThread:
@@ -170,7 +177,7 @@ class NetCam:
                 self.captureFps.compute()
             self.imgBuffer = socket.recv_string()
             # print("Received request: [ %s ]" % (string))
-            time.sleep(1)
+            time.sleep(0.001)
             socket.send(b"ACK")
 
 
@@ -213,7 +220,7 @@ class NetCam:
 
             if self.displayDebug:
                 self.captureFps.compute()
-            #time.sleep(0.01)
+            time.sleep(0.001)
         self.isRunning = False
 
     def getDetail(self):
@@ -246,15 +253,17 @@ class NetCam:
         if self.displayDebug:
             self.displayFps.compute()
             textPosX, textPosY = NetCam.TEXT_POSITION
-            frame = cv2.putText(frame, f'Display : {self.displayFps.fps} fps ({self.displayResolution})', (textPosX,textPosY), cv2.FONT_HERSHEY_SIMPLEX, 0.5, NetCam.TEXT_COLOR, 1,
-                                cv2.LINE_AA)
-            textPosY += 20
             frame = cv2.putText(frame, f'Capture : {self.captureFps.fps} fps ({self.resolution})', (textPosX,textPosY), cv2.FONT_HERSHEY_SIMPLEX, 0.5, NetCam.TEXT_COLOR, 1,
                                 cv2.LINE_AA)
             textPosY += 20
-            frame = cv2.putText(frame, f'Fullscreen : {self.fullScreen}', (textPosX,textPosY), cv2.FONT_HERSHEY_SIMPLEX, 0.5, NetCam.TEXT_COLOR, 1,
+            frame = cv2.putText(frame, f'Display : {self.displayFps.fps} fps ({self.displayResolution})', (textPosX,textPosY), cv2.FONT_HERSHEY_SIMPLEX, 0.5, NetCam.TEXT_COLOR, 1,
+                                cv2.LINE_AA)
+            textPosY += 20
+            frame = cv2.putText(frame, f'Network : {self.networkFps.fps} fps', (textPosX,textPosY), cv2.FONT_HERSHEY_SIMPLEX, 0.5, NetCam.TEXT_COLOR, 1,
                                 cv2.LINE_AA)
 
+
+        # TODO : Fullscreen Ne fonctionne pas
         if self.fullScreen:
             cv2.namedWindow('stream',cv2.WINDOW_GUI_NORMAL)
             #cv2.namedWindow('stream',cv2.WND_PROP_FULLSCREEN)

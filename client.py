@@ -10,7 +10,6 @@ if __name__ == '__main__':
 
     print('Starting capture...')
     netCam.startCapture()
-    print('Starting publishing video...')
     netCam.startClient()
 
     while netCam.isRunning:
@@ -34,6 +33,6 @@ if __name__ == '__main__':
                 netCam.toggleFullSreen()
         netCam.display()
 
-    netCam.stopCapture()
+    netCam.clearAll()
     exit()
 
