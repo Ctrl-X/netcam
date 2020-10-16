@@ -4,13 +4,14 @@ from NetCam import *
 
 if __name__ == '__main__':
     print('Started main.py...')
-    netCam = NetCam(resolution='HD')
+    netCam = NetCam()
+    netCam.setDisplayResolution('QVGA')
     print('Camera Info', netCam.getDetail())
 
-    netCam.startCapture()
     print('Starting capture...')
-
-    netCam.setDisplayResolution('QVGA')
+    netCam.startCapture()
+    print('Starting publishing video...')
+    netCam.startClient()
 
     while netCam.isRunning:
 

@@ -8,7 +8,7 @@
 
 import time
 from threading import Thread
-
+import zmq
 import cv2
 import numpy as np
 
@@ -16,7 +16,8 @@ import numpy as np
 
 class NetCam:
     DEFAULT_IP = '10.10.64.154'
-    DEFAULT_PORT = '5555'
+    DEFAULT_SERVER_PORT = '5555'
+    DEFAULT_CLIENT_PORT = '5556'
 
     DEFAULT_RES = 'HD'
     MAX_FPS = 60
@@ -25,10 +26,9 @@ class NetCam:
     TEXT_COLOR = (0, 0, 255)
     TEXT_POSITION = (20, 20)
 
-    def __init__(self, serverip=DEFAULT_IP, serverport=DEFAULT_PORT, resolution=DEFAULT_RES, isstereocam=True,
+    def __init__(self, serverip=DEFAULT_IP, serverport=DEFAULT_SERVER_PORT, resolution=DEFAULT_RES, isstereocam=True,
                  source='0', fullscreen=False):
-        self.serverIp = serverip
-        self.serverPort = serverport
+
         self.resolution = resolution
         self.isStereoCam = isstereocam
         self.source = source
@@ -40,11 +40,19 @@ class NetCam:
         self.imgBuffer = [None]
         self.isRunning = False
         self.fullScreen = fullscreen
+        self.videothread = None
 
         ## Debug informations
+        self.serverIp = serverip
+        self.serverPort = serverport
         self.displayDebug = False
         self.displayFps = FpsCatcher()
         self.captureFps = FpsCatcher()
+
+        ## Server Information
+        self.workerThread = []
+        self.workers = None
+        self.clients = None
 
 
     def startCapture(self):
@@ -68,13 +76,92 @@ class NetCam:
         self.videoStream.read(self.imgBuffer)
 
         ## Launch the capture thread
-        thread = Thread(target=self.update, args=([self.videoStream]), daemon=True)
-        thread.start()
+        self.videothread = Thread(target=self.update, args=([self.videoStream]), daemon=True)
+        self.videothread.start()
 
     def stopCapture(self):
+        if self.videothread != None:
+            self.videothread.stop()
         if self.videoStream and self.videoStream.isOpened():
             self.videoStream.release()
         self.isRunning = False
+
+    def startClient(self):
+        """
+            Launch the network client
+        """
+        zmqContext = zmq.Context()
+        socket = zmqContext.socket(zmq.PUB)
+        workerThread = Thread(target=self.publish, args=(socket))
+        self.workerThread.append(workerThread)
+        self.isRunning = True
+        workerThread.start()
+
+
+    def publish(self, socket):
+        """
+            Publish Data to any connected Server
+        :param socket:
+        """
+        socket.bind("tcp://*:%s" % NetCam.DEFAULT_CLIENT_PORT)
+        while self.isRunning:
+            socket.send(self.imgBuffer)
+            time.sleep(1)
+
+
+    def startServer(self):
+        # Prepare our context and sockets
+        zmqContext = zmq.Context.instance()
+
+        # Socket to talk to clients
+        self.clients = zmqContext.socket(zmq.ROUTER)
+        self.clients.bind(f'tcp://*:{NetCam.DEFAULT_SERVER_PORT}')
+
+        # Socket to talk to workers
+        self.workers = zmqContext.socket(zmq.DEALER)
+
+        # Launch pool of worker threads
+        url_worker = "inproc://workers"
+        self.isRunning = True
+        for i in range(5):
+            workerThread = Thread(target=self.connectionListener, args=(url_worker,zmqContext))
+            self.workerThread.append(workerThread)
+            workerThread.start()
+
+        zmq.device(zmq.QUEUE, self.clients, self.workers)
+
+    def stopServer(self):
+        self.isRunning = False
+        if self.workerThread:
+            for worker in self.workerThread:
+                worker.stop()
+        if self.clients != None:
+            self.clients.close()
+        if self.workers != None:
+            self.workers.close()
+        zmqContext = zmq.Context.instance()
+        zmqContext.term()
+
+
+    def connectionListener(self, workerUrl, zmqContext = None):
+        """Worker routine"""
+        # Context to get inherited or create a new one
+        zmqContext = zmqContext or zmq.Context.instance()
+
+        # Socket to talk to dispatcher
+        socket = zmqContext.socket(zmq.REP)
+        socket.connect(workerUrl)
+
+        while self.isRunning:
+            if self.displayDebug:
+                self.captureFps.compute()
+            self.imgBuffer = socket.recv_string()
+            # print("Received request: [ %s ]" % (string))
+            time.sleep(1)
+            socket.send(b"ACK")
+
+
+
 
     def initVideoStream(self, source):
         """
@@ -166,6 +253,8 @@ class NetCam:
         self.displayDebug = not self.displayDebug
         self.displayFps.initTime()
         self.captureFps.initTime()
+
+
 
 
 def resolutionFinder(res, isStereoCam):
