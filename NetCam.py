@@ -157,28 +157,30 @@ class NetCam:
         zmqContext.term()
 
     def receive(self, url_publisher, socket):
-        socket.connect(url_publisher)
+        success = socket.connect(url_publisher)
 
+        print(f'Connected To {url_publisher}')
+        print(success)
         while self.isRunning:
             self.imgBuffer = socket.recv()
             print('received')
 
-    def connectionListener2(self, workerUrl, zmqContext = None):
-        """Worker routine"""
-        # Context to get inherited or create a new one
-        zmqContext = zmqContext or zmq.Context.instance()
-
-        # Socket to talk to dispatcher
-        socket = zmqContext.socket(zmq.REP)
-        socket.connect(workerUrl)
-
-        while self.isRunning:
-            if self.displayDebug:
-                self.captureFps.compute()
-            self.imgBuffer = socket.recv_string()
-            # print("Received request: [ %s ]" % (string))
-            time.sleep(0.001)
-            socket.send(b"ACK")
+    # def connectionListener2(self, workerUrl, zmqContext = None):
+    #     """Worker routine"""
+    #     # Context to get inherited or create a new one
+    #     zmqContext = zmqContext or zmq.Context.instance()
+    #
+    #     # Socket to talk to dispatcher
+    #     socket = zmqContext.socket(zmq.REP)
+    #     socket.connect(workerUrl)
+    #
+    #     while self.isRunning:
+    #         if self.displayDebug:
+    #             self.captureFps.compute()
+    #         self.imgBuffer = socket.recv_string()
+    #         # print("Received request: [ %s ]" % (string))
+    #         time.sleep(0.001)
+    #         socket.send(b"ACK")
 
 
 
