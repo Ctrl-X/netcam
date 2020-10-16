@@ -92,7 +92,7 @@ class NetCam:
         """
         zmqContext = zmq.Context()
         socket = zmqContext.socket(zmq.PUB)
-        workerThread = Thread(target=self.publish, args=(socket))
+        workerThread = Thread(target=self.publish, args=([socket]))
         self.workerThread.append(workerThread)
         self.isRunning = True
         workerThread.start()
