@@ -113,22 +113,29 @@ class NetCam:
         # Prepare our context and sockets
         zmqContext = zmq.Context.instance()
 
-        # Socket to talk to clients
-        self.clients = zmqContext.socket(zmq.ROUTER)
-        self.clients.bind(f'tcp://*:{NetCam.DEFAULT_SERVER_PORT}')
-
-        # Socket to talk to workers
-        self.workers = zmqContext.socket(zmq.DEALER)
-
-        # Launch pool of worker threads
-        url_worker = "inproc://workers"
+        socket = zmqContext.socket(zmq.SUB)
+        url_publisher = f"tcp://192.168.1.246:{NetCam.DEFAULT_CLIENT_PORT}"
+        workerThread = Thread(target=self.receive, args=(url_publisher,socket))
+        self.workerThread.append(workerThread)
         self.isRunning = True
-        for i in range(5):
-            workerThread = Thread(target=self.connectionListener, args=(url_worker,zmqContext))
-            self.workerThread.append(workerThread)
-            workerThread.start()
+        workerThread.start()
 
-        zmq.device(zmq.QUEUE, self.clients, self.workers)
+        # # Socket to talk to clients
+        # self.clients = zmqContext.socket(zmq.ROUTER)
+        # self.clients.bind(f'tcp://*:{NetCam.DEFAULT_SERVER_PORT}')
+        #
+        # # Socket to talk to workers
+        # self.workers = zmqContext.socket(zmq.DEALER)
+        #
+        # # Launch pool of worker threads
+        # url_worker = "inproc://workers"
+        # self.isRunning = True
+        # for i in range(5):
+        #     workerThread = Thread(target=self.connectionListener, args=(url_worker,zmqContext))
+        #     self.workerThread.append(workerThread)
+        #     workerThread.start()
+        #
+        # zmq.device(zmq.QUEUE, self.clients, self.workers)
 
     def stopServer(self):
         self.isRunning = False
@@ -142,8 +149,14 @@ class NetCam:
         zmqContext = zmq.Context.instance()
         zmqContext.term()
 
+    def receive(self, url_publisher, socket):
+        socket.connect(url_publisher)
 
-    def connectionListener(self, workerUrl, zmqContext = None):
+        while self.isRunning:
+            self.imgBuffer = socket.recv()
+            print('received')
+
+    def connectionListener2(self, workerUrl, zmqContext = None):
         """Worker routine"""
         # Context to get inherited or create a new one
         zmqContext = zmqContext or zmq.Context.instance()
