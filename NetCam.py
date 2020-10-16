@@ -112,7 +112,7 @@ class NetCam:
         while self.isRunning:
             if self.displayDebug:
                 self.networkFps.compute()
-            socket.send(i)
+            socket.send_string(f'{i}')
             time.sleep(0.001)
 
 
