@@ -35,4 +35,5 @@ if __name__ == '__main__':
         netCam.display()
 
     netCam.stopCapture()
+    exit()
 
