@@ -36,4 +36,3 @@ if __name__ == '__main__':
 
     netCam.stopCapture()
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
