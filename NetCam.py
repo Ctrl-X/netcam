@@ -120,8 +120,7 @@ class NetCam:
         zmqContext = zmq.Context.instance()
 
         socket = zmqContext.socket(zmq.SUB)
-        url_publisher = f"tcp://192.168.1.246:{NetCam.DEFAULT_CLIENT_PORT}"
-        workerThread = Thread(target=self.receive, args=(url_publisher,socket))
+        workerThread = Thread(target=self.receive, args=([socket]))
         self.workerThread.append(workerThread)
         self.isRunning = True
         workerThread.start()
@@ -143,27 +142,18 @@ class NetCam:
         #
         # zmq.device(zmq.QUEUE, self.clients, self.workers)
 
-    def clearAll(self):
-        self.stopCapture()
-        self.isRunning = False
-        if self.workerThread:
-            for worker in self.workerThread:
-                worker.join()
-        if self.clients != None:
-            self.clients.close()
-        if self.workers != None:
-            self.workers.close()
-        zmqContext = zmq.Context.instance()
-        zmqContext.term()
 
-    def receive(self, url_publisher, socket):
-        success = socket.connect(url_publisher)
+
+    def receive(self, socket):
+        url_publisher = f"tcp://192.168.1.246:{NetCam.DEFAULT_CLIENT_PORT}"
+        socket.connect(url_publisher)
 
         print(f'Connected To {url_publisher}')
-        print(success)
+        print('self.isRunning',self.isRunning)
         while self.isRunning:
-            self.imgBuffer = socket.recv()
             print('received')
+            self.imgBuffer = socket.recv()
+            time.sleep(000.1)
 
     # def connectionListener2(self, workerUrl, zmqContext = None):
     #     """Worker routine"""
@@ -278,7 +268,18 @@ class NetCam:
         self.displayFps.initTime()
         self.captureFps.initTime()
 
-
+    def clearAll(self):
+        self.stopCapture()
+        self.isRunning = False
+        if self.workerThread:
+            for worker in self.workerThread:
+                worker.join()
+        if self.clients != None:
+            self.clients.close()
+        if self.workers != None:
+            self.workers.close()
+        zmqContext = zmq.Context.instance()
+        zmqContext.term()
 
 
 def resolutionFinder(res, isStereoCam):
