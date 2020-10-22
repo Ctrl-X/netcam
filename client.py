@@ -10,6 +10,7 @@ if __name__ == '__main__':
 
     try:
         while netCam.isRunning:
+            netCam.display()
             key = cv2.waitKey(1)
             if key != -1:
                 if key == ord('q'):  # q to quit

@@ -75,8 +75,12 @@ class NetCam:
 
         ## Launch the display Thread (main thread)
         if withdisplay:
-            self.displayRunner()
-            time.sleep(0.1)
+            console(f'Display resolution : {self.displayWidth} x {self.displayHeight}', 2)
+            if self.fullScreen:
+                # cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WINDOW_GUI_NORMAL)
+                cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_FULLSCREEN)
+                cv2.setWindowProperty(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+            console('Display is now ready.', 2)
 
         console('NetCam Client started !')
 
@@ -251,42 +255,33 @@ class NetCam:
     def toggleFullScreen(self):
         self.fullScreen = not self.fullScreen
 
-    def displayRunner(self):
+    def display(self):
+        frame = self.imgBuffer
+        if self.isStereoCam:
+            # the Display is not in stereo, so remove the half of the picture
+            frame = frame[0:self.imgHeight, 0:self.imgWidth // 2]
 
-        console(f'Display resolution : {self.displayWidth} x {self.displayHeight}', 2)
-        if self.fullScreen:
-            # cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WINDOW_GUI_NORMAL)
-            cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_FULLSCREEN)
-            cv2.setWindowProperty(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-        console('Display thread is now running.', 2)
-        while self.isRunning:
-            frame = self.imgBuffer
-            if self.isStereoCam:
-                # the Display is not in stereo, so remove the half of the picture
-                frame = frame[0:self.imgHeight, 0:self.imgWidth // 2]
+        if self.displayWidth != self.imgWidth:
+            # Resize the picture for display purpose
+            frame = cv2.resize(frame, (self.displayWidth, self.displayHeight))
 
-            if self.displayWidth != self.imgWidth:
-                # Resize the picture for display purpose
-                frame = cv2.resize(frame, (self.displayWidth, self.displayHeight))
+        if self.displayDebug:
+            self.displayFps.compute()
+            textPosX, textPosY = NetCam.TEXT_POSITION
+            frame = cv2.putText(frame, f'Capture : {self.captureFps.fps} fps ({self.captureResolution})',
+                                (textPosX, textPosY),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, NetCam.TEXT_COLOR, 1,
+                                cv2.LINE_AA)
+            textPosY += 20
+            frame = cv2.putText(frame, f'Display : {self.displayFps.fps} fps ({self.displayResolution})',
+                                (textPosX, textPosY), cv2.FONT_HERSHEY_SIMPLEX, 0.5, NetCam.TEXT_COLOR, 1,
+                                cv2.LINE_AA)
+            textPosY += 20
+            frame = cv2.putText(frame, f'Network : {self.networkFps.fps} fps', (textPosX, textPosY),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, NetCam.TEXT_COLOR, 1,
+                                cv2.LINE_AA)
+        cv2.imshow(NetCam.DEFAULT_WINDOW_NAME, frame)
 
-            if self.displayDebug:
-                self.displayFps.compute()
-                textPosX, textPosY = NetCam.TEXT_POSITION
-                frame = cv2.putText(frame, f'Capture : {self.captureFps.fps} fps ({self.captureResolution})',
-                                    (textPosX, textPosY),
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, NetCam.TEXT_COLOR, 1,
-                                    cv2.LINE_AA)
-                textPosY += 20
-                frame = cv2.putText(frame, f'Display : {self.displayFps.fps} fps ({self.displayResolution})',
-                                    (textPosX, textPosY), cv2.FONT_HERSHEY_SIMPLEX, 0.5, NetCam.TEXT_COLOR, 1,
-                                    cv2.LINE_AA)
-                textPosY += 20
-                frame = cv2.putText(frame, f'Network : {self.networkFps.fps} fps', (textPosX, textPosY),
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, NetCam.TEXT_COLOR, 1,
-                                    cv2.LINE_AA)
-            cv2.imshow(NetCam.DEFAULT_WINDOW_NAME, frame)
-            time.sleep(0.001)
-        console('Display thread stopped.', 1)
 
     def toggleDebug(self):
         self.displayDebug = not self.displayDebug
