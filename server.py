@@ -1,10 +1,4 @@
-
-import zmq
-
 from NetCam import *
-
-
-
 
 if __name__ == "__main__":
     netCam = NetCam()
@@ -14,9 +8,7 @@ if __name__ == "__main__":
         key = cv2.waitKey(1)
         if key != -1:
             if key == ord('q'):  # q to quit
-                cv2.destroyAllWindows()
-                raise StopIteration
+                netCam.clearAll()
         # netCam.display()
 
-    netCam.clearAll()
-
+    exit()
