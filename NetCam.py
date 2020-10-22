@@ -105,7 +105,8 @@ class NetCam:
         while self.isRunning:
             if self.displayDebug:
                 self.networkFps.compute()
-            socket.send_string(f'{i}')
+            socket.send(self.imgBuffer)
+            # socket.send_string(f'{i}')
             time.sleep(0.001)
         console('Network thread stopped.', 1)
 
