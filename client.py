@@ -29,6 +29,8 @@ if __name__ == '__main__':
                     netCam.setDisplayResolution('2K')
                 elif key == ord('f'):  # F to toggle fullscreen
                     netCam.toggleFullScreen()
+                elif key == 27:  # Esc key was pressed,
+                    netCam.toggleFullScreen(False)
                 else:
                     print(f'Key pressed: {key}')
     except KeyboardInterrupt:

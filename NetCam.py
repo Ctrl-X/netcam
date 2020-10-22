@@ -262,8 +262,8 @@ class NetCam:
             self.displayWidth, self.displayHeight = resolutionFinder(resolution)
             console(f'Changed Display resolution for : {resolution} ({self.displayWidth} x {self.displayHeight})')
 
-    def toggleFullScreen(self):
-        self.fullScreen = not self.fullScreen
+    def toggleFullScreen(self, isFullScreen=None):
+        self.fullScreen = isFullScreen if isFullScreen is not None else not self.fullScreen
         console(f'Toggle fullscreen : {self.fullScreen}')
         if self.fullScreen:
             # cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WINDOW_GUI_NORMAL)
