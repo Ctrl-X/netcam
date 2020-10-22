@@ -31,5 +31,6 @@ if __name__ == '__main__':
                 print(f'Key pressed: {key}')
         netCam.display()
 
+
     netCam.clearAll()
     exit()

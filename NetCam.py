@@ -282,6 +282,7 @@ class NetCam:
             self.threadList = []
             zmqContext = zmq.Context.instance()
             zmqContext.term()
+            time.sleep(2)
             console('Stopping Done.', 1)
 
 
