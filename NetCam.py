@@ -40,7 +40,7 @@ class NetCam:
         self.isRunning = False
         self.fullScreen = fullscreen
         self.videoStream = None
-        self.videothread = None
+        self.videoThread = None
 
         ## Debug informations
         self.serverIp = serverip
@@ -51,9 +51,7 @@ class NetCam:
         self.networkFps = FpsCatcher()
 
         ## Server Information
-        self.workerThread = []
-        self.workers = None
-        self.clients = None
+        self.threadList = []
 
     def startClient(self):
         """
@@ -68,7 +66,7 @@ class NetCam:
         zmqContext = zmq.Context()
         socket = zmqContext.socket(zmq.PUB)
         workerThread = Thread(target=self.clientThread, args=([socket]))
-        self.workerThread.append(workerThread)
+        self.threadList.append(workerThread)
         workerThread.start()
 
     def clientThread(self, socket):
@@ -99,7 +97,7 @@ class NetCam:
         zmqContext = zmq.Context()
         socket = zmqContext.socket(zmq.SUB)
         workerThread = Thread(target=self.serverThread, args=([socket]))
-        self.workerThread.append(workerThread)
+        self.threadList.append(workerThread)
         workerThread.start()
 
         # # Socket to talk to clients
@@ -114,7 +112,7 @@ class NetCam:
         # self.isRunning = True
         # for i in range(5):
         #     workerThread = Thread(target=self.connectionListener, args=(url_worker,zmqContext))
-        #     self.workerThread.append(workerThread)
+        #     self.threadList.append(workerThread)
         #     workerThread.start()
         #
         # zmq.device(zmq.QUEUE, self.clients, self.workers)
@@ -171,13 +169,9 @@ class NetCam:
         self.videoStream.read(self.imgBuffer)
 
         ## Launch the capture thread
-        self.videothread = Thread(target=self.update, args=([self.videoStream]), daemon=True)
-        self.videothread.start()
+        self.videoThread = Thread(target=self.update, args=([self.videoStream]), daemon=True)
+        self.videoThread.start()
 
-    def stopCapture(self):
-        if self.videoStream and self.videoStream.isOpened():
-            self.videoStream.release()
-            console('released video stream.', 1)
 
     def initVideoStream(self, source):
         """
@@ -218,6 +212,10 @@ class NetCam:
             if self.displayDebug:
                 self.captureFps.compute()
             time.sleep(0.001)
+
+        if self.videoStream and self.videoStream.isOpened():
+            console('Released video stream.', 1)
+            self.videoStream.release()
         console('Capture thread stopped.', 1)
 
     def getDetail(self):
@@ -278,15 +276,13 @@ class NetCam:
 
     def clearAll(self):
         console('Stopping NetCam...')
-        self.stopCapture()
-        if self.clients != None:
-            self.clients.close()
-        if self.workers != None:
-            self.workers.close()
         self.isRunning = False
-        console('Stopping Done.', 1)
+        self.videoStream = None
+        self.videoThread = None
+        self.threadList = []
         zmqContext = zmq.Context.instance()
         zmqContext.term()
+        console('Stopping Done.', 1)
 
 
 def console(text, indentlevel=0):
