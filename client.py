@@ -9,7 +9,6 @@ if __name__ == '__main__':
 
     print('Camera Info', netCam.getDetail())
 
-
     while netCam.isRunning:
 
         key = cv2.waitKey(1)
@@ -29,10 +28,9 @@ if __name__ == '__main__':
                 netCam.setDisplayResolution('FHD')
             elif key == 194:  # F5 to toggle fullscreen
                 netCam.toggleFullScreen()
-            else
-                print(f'Key pressed: {key}' )
+            else:
+                print(f'Key pressed: {key}')
         netCam.display()
 
     netCam.clearAll()
     exit()
-
