@@ -40,7 +40,6 @@ class NetCam:
         self.isRunning = False
         self.fullScreen = fullscreen
         self.videoStream = None
-        self.videoThread = None
 
         ## Debug informations
         self.serverIp = serverip
@@ -65,11 +64,11 @@ class NetCam:
         ## Launch the networdThread
         zmqContext = zmq.Context()
         socket = zmqContext.socket(zmq.PUB)
-        workerThread = Thread(target=self.clientThread, args=([socket]))
+        workerThread = Thread(target=self.clientThreadRunner, args=([socket]))
         self.threadList.append(workerThread)
         workerThread.start()
 
-    def clientThread(self, socket):
+    def clientThreadRunner(self, socket):
         """
             Publish Data to any connected Server
         :param socket:
@@ -96,7 +95,7 @@ class NetCam:
         ## Launch the networdThread
         zmqContext = zmq.Context()
         socket = zmqContext.socket(zmq.SUB)
-        workerThread = Thread(target=self.serverThread, args=([socket]))
+        workerThread = Thread(target=self.serverThreadRunner, args=([socket]))
         self.threadList.append(workerThread)
         workerThread.start()
 
@@ -117,7 +116,7 @@ class NetCam:
         #
         # zmq.device(zmq.QUEUE, self.clients, self.workers)
 
-    def serverThread(self, socket):
+    def serverThreadRunner(self, socket):
         url_publisher = f"tcp://192.168.1.246:{NetCam.DEFAULT_CLIENT_PORT}"
         socket.connect(url_publisher)
 
@@ -169,8 +168,8 @@ class NetCam:
         self.videoStream.read(self.imgBuffer)
 
         ## Launch the capture thread
-        self.videoThread = Thread(target=self.update, args=([self.videoStream]), daemon=True)
-        self.videoThread.start()
+        videoThread = Thread(target=self.videoThreadRunner, args=([self.videoStream]), daemon=True)
+        videoThread.start()
 
     def initVideoStream(self, source):
         """
@@ -196,7 +195,7 @@ class NetCam:
 
         return videoStream
 
-    def update(self, stream):
+    def videoThreadRunner(self, stream):
         """
             Read next stream frame in a daemon thread
         :param stream: videoStream to read from
@@ -213,8 +212,8 @@ class NetCam:
             time.sleep(0.001)
 
         if self.videoStream and self.videoStream.isOpened():
-            console('Released video stream.', 1)
             self.videoStream.release()
+        self.videoStream = None
         console('Capture thread stopped.', 1)
 
     def getDetail(self):
@@ -277,8 +276,6 @@ class NetCam:
         if self.isRunning:
             console('Stopping NetCam...')
             self.isRunning = False
-            self.videoStream = None
-            self.videoThread = None
             self.threadList = []
             zmqContext = zmq.Context.instance()
             zmqContext.term()
