@@ -303,7 +303,7 @@ class NetCam:
             # Resize the picture for display purpose
             frame = cv2.resize(frame, (self.displayWidth, self.displayHeight))
 
-        if self.displayDebug:
+        if self.displayDebug :
             self.displayFps.compute()
             debugTextSize = self.displayWidth / 1280
             thickness = 1 if self.displayWidth < 1280 else 2
@@ -311,10 +311,9 @@ class NetCam:
             textPosX, textPosY = NetCam.TEXT_POSITION
             textPosX += int(40 * debugTextSize)
             textPosY += int(40 * debugTextSize)
-            frame = cv2.putText(frame, f'Capture : {self.captureFps.fps} fps ({self.captureResolution})\r\n'
-                                       f'Display : {self.displayFps.fps} fps ({self.displayResolution})\n'
-                                       f'Network : {self.networkFps.fps} fps\n'
-                                       f's : see stereo',
+            frame = cv2.putText(frame, f'Capture : {self.captureFps.fps} fps ({self.captureResolution}) | '
+                                       f'Display : {self.displayFps.fps} fps ({self.displayResolution}) | '
+                                       f'Network : {self.networkFps.fps} fps',
                                 (textPosX, textPosY),
                                 cv2.FONT_HERSHEY_SIMPLEX, debugTextSize, NetCam.TEXT_COLOR, thickness,
                                 cv2.LINE_AA)
