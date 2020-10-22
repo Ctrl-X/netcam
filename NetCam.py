@@ -34,15 +34,13 @@ class NetCam:
         self.displayResolution = display
         self.isStereoCam = isstereocam
         self.source = source
-        self.imgWidth = resolutionFinder(self.captureResolution, self.isStereoCam)
+        self.imgWidth, self.imgHeight = resolutionFinder(self.captureResolution, self.isStereoCam)
         console(self.imgWidth)
-        self.imgHeight = None
 
         if self.displayResolution:
-            self.displayWidth = resolutionFinder(self.displayResolution)
+            self.displayWidth, self.displayHeight = resolutionFinder(self.displayResolution)
         else:
             self.displayWidth: None
-        self.displayHeight: None
 
         self.fps = NetCam.MAX_FPS
         self.imgBuffer = [None]
@@ -205,7 +203,7 @@ class NetCam:
         assert self.isRunning, 'Unable to open camera %s . Is your camera connected (look for videoX in /dev/ ? ' % source
 
         ## Get the requested resolution
-        width = resolutionFinder(self.captureResolution, self.isStereoCam)
+        width, height = resolutionFinder(self.captureResolution, self.isStereoCam)
 
         ## Define all video settings
         videoStream.set(cv2.CAP_PROP_BUFFERSIZE,
@@ -214,6 +212,7 @@ class NetCam:
         videoStream.set(cv2.CAP_PROP_FOURCC,
                         cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))  # define the compression to mjpg
         videoStream.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+        videoStream.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
 
         return videoStream
 
@@ -256,7 +255,7 @@ class NetCam:
     def setDisplayResolution(self, resolution):
         if (resolution != None):
             self.displayResolution = resolution
-            self.displayWidth = resolutionFinder(resolution)
+            self.displayWidth, _ = resolutionFinder(resolution)
             self.computeDisplayHeight()
             console(f'Changed Display resolution for : {resolution} ({self.displayWidth} x {self.displayHeight})')
 
@@ -356,21 +355,21 @@ def console(text, indentlevel=0):
 
 def resolutionFinder(res, isstereocam=False):
     widthMultiplier = 2 if isstereocam else 1
-    switcher = {
-        'QVGA': 320 ,
-        'VGA': 640 ,
-        'HD': 1280 ,
-        'FHD': 1920 ,
-        '2K': 2048
-    }
     # switcher = {
-    #     'QVGA': (320 * widthMultiplier, 240),
-    #     'VGA': (640 * widthMultiplier, 480),
-    #     'HD': (1280 * widthMultiplier, 720),
-    #     'FHD': (1920 * widthMultiplier, 1080),
-    #     '2K': (2048 * widthMultiplier, 1080)
+    #     'QVGA': 320 ,
+    #     'VGA': 640 ,
+    #     'HD': 1280 ,
+    #     'FHD': 1920 ,
+    #     '2K': 2048
     # }
-    return switcher.get(res, 640 * widthMultiplier)
+    switcher = {
+        'QVGA': (320 * widthMultiplier, 240),
+        'VGA': (640 * widthMultiplier, 480),
+        'HD': (1280 * widthMultiplier, 720),
+        'FHD': (1920 * widthMultiplier, 1080),
+        '2K': (2048 * widthMultiplier, 1080)
+    }
+    return switcher.get(res, (640 * widthMultiplier, 480))
 
 
 class FpsCatcher:
