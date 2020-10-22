@@ -311,7 +311,7 @@ class NetCam:
             textPosX, textPosY = NetCam.TEXT_POSITION
             textPosX += int(40 * debugTextSize)
             textPosY += int(40 * debugTextSize)
-            frame = cv2.putText(frame, f'Capture : {self.captureFps.fps} fps ({self.captureResolution})\n'
+            frame = cv2.putText(frame, f'Capture : {self.captureFps.fps} fps ({self.captureResolution})\r\n'
                                        f'Display : {self.displayFps.fps} fps ({self.displayResolution})\n'
                                        f'Network : {self.networkFps.fps} fps\n'
                                        f's : see stereo',
