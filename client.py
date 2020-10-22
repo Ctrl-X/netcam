@@ -11,7 +11,7 @@ if __name__ == '__main__':
     try:
         while netCam.isRunning:
             netCam.display()
-            key = cv2.waitKey(0)
+            key = cv2.waitKey(20)
             if key != -1:
                 if key == ord('q'):  # q to quit
                     netCam.clearAll()
