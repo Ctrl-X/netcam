@@ -25,7 +25,9 @@ if __name__ == '__main__':
                     netCam.setDisplayResolution('HD')
                 elif key == 193:  # F4
                     netCam.setDisplayResolution('FHD')
-                elif key == 194:  # F5 to toggle fullscreen
+                elif key == 194:  # F5
+                    netCam.setDisplayResolution('2K')
+                elif key == ord('f'):  # F to toggle fullscreen
                     netCam.toggleFullScreen()
                 else:
                     print(f'Key pressed: {key}')
