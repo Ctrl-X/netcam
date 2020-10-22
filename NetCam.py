@@ -286,13 +286,13 @@ class NetCam:
             isWindowClosed = cv2.getWindowProperty(NetCam.DEFAULT_WINDOW_NAME, 0)
             if isWindowClosed == -1:
                 # the window has been closed
-                console("Closing window...")
+                console("Window was closed.")
                 self.clearAll()
         except:
-            console("Closing display...")
-
+            console("Window was closed.")
             self.clearAll()
             return
+
         frame = self.imgBuffer
         if self.isStereoCam:
             # the Display is not in stereo, so remove the half of the picture
