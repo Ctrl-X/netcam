@@ -293,7 +293,7 @@ def console(text, indentLevel=0):
     output = ''
     for count in range(0, indentLevel):
         output = output + '\t'
-    output = output + time.ctime()
+    output = output + time.strftime('%l:%M:%S')
     print(f'{output} - {text}')
 
 
