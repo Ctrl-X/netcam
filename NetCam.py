@@ -213,6 +213,8 @@ class NetCam:
 
         if self.videoStream and self.videoStream.isOpened():
             self.videoStream.release()
+            console('Released camera.', 1)
+
         self.videoStream = None
         console('Capture thread stopped.', 1)
 
