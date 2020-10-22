@@ -211,7 +211,6 @@ class NetCam:
         videoStream.set(cv2.CAP_PROP_FPS, NetCam.MAX_FPS)  # try to put the fps to MAX_FPS
         videoStream.set(cv2.CAP_PROP_FOURCC,
                         cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))  # define the compression to mjpg
-        # videoStream.set(cv2.CAP_PROP_FORMAT, -1)
         videoStream.set(cv2.CAP_PROP_FRAME_WIDTH, width)
         videoStream.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
 
@@ -296,13 +295,13 @@ class NetCam:
             return
 
         frame = self.imgBuffer
-        if self.isStereoCam:
-            # the Display is not in stereo, so remove the half of the picture
-            frame = frame[0:self.imgHeight, 0:self.imgWidth // 2]
-
-        if self.displayHeight != self.imgHeight:
-            # Resize the picture for display purpose
-            frame = cv2.resize(frame, (self.displayWidth, self.displayHeight))
+        # if self.isStereoCam:
+        #     # the Display is not in stereo, so remove the half of the picture
+        #     frame = frame[0:self.imgHeight, 0:self.imgWidth // 2]
+        #
+        # if self.displayHeight != self.imgHeight:
+        #     # Resize the picture for display purpose
+        #     frame = cv2.resize(frame, (self.displayWidth, self.displayHeight))
 
         if self.displayDebug:
             self.displayFps.compute()
