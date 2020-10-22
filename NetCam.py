@@ -211,6 +211,7 @@ class NetCam:
         videoStream.set(cv2.CAP_PROP_FPS, NetCam.MAX_FPS)  # try to put the fps to MAX_FPS
         videoStream.set(cv2.CAP_PROP_FOURCC,
                         cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))  # define the compression to mjpg
+        videoStream.set(cv2.CAP_PROP_FORMAT, -1)
         videoStream.set(cv2.CAP_PROP_FRAME_WIDTH, width)
         videoStream.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
 
