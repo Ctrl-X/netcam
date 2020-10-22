@@ -235,7 +235,7 @@ class NetCam:
     def setDisplayResolution(self, resolution):
         if (resolution != None):
             self.displayResolution = resolution
-            self.displayWidth, self.displayHeight = resolutionFinder(resolution, self.isStereoCam)
+            self.displayWidth, self.displayHeight = resolutionFinder(resolution)
 
     def toggleFullScreen(self):
         self.fullScreen = not self.fullScreen
