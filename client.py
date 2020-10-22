@@ -8,8 +8,6 @@ if __name__ == '__main__':
     print(netCam.getDetail())
     netCam.startClient(withdisplay=True)
 
-    cv2.getWindowProperty('window-name', 0)
-
     try:
         while netCam.isRunning:
             key = cv2.waitKey(1)
