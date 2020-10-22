@@ -6,7 +6,6 @@
 ##  Version : 0.1
 ################################################################################
 
-from datetime import date
 import time
 from threading import Thread
 import zmq
@@ -294,7 +293,7 @@ def console(text, indentLevel=0):
     output = ''
     for count in range(0, indentLevel):
         output = output + '\t'
-    output = output + date.today()
+    output = output + time.ctime()
     print(f'{output} - {text}')
 
 
