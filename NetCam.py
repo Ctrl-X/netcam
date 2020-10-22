@@ -34,7 +34,7 @@ class NetCam:
         self.isStereoCam = isstereocam
         self.source = source
         self.imgWidth, self.imgHeight = resolutionFinder(self.captureResolution, self.isStereoCam)
-        self.displayWidth, self.displayHeight = resolutionFinder(self.displayResolution, True)
+        self.displayWidth, self.displayHeight = resolutionFinder(self.displayResolution)
         self.fps = NetCam.MAX_FPS
         self.imgBuffer = [None]
         self.isRunning = False
@@ -243,6 +243,8 @@ class NetCam:
     def display(self):
         frame = self.imgBuffer
         if self.displayWidth != self.imgWidth:
+            if self.isStereoCam:
+                frame = frame[0:self.imgHeight, 0:self.imgWidth/2]
             frame = cv2.resize(frame, (self.displayWidth, self.displayHeight))
         if self.displayDebug:
             self.displayFps.compute()
