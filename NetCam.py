@@ -76,7 +76,7 @@ class NetCam:
             Publish Data to any connected Server
         :param socket:
         """
-        console('Starting network broadcast ( ZMQ Publish) ...')
+        console('Network thread is now running ( ZMQ Publish)...', 1)
         url_publish = "tcp://*:%s" % NetCam.DEFAULT_CLIENT_PORT
         socket.bind(url_publish)
         console(f'Publishing video on {url_publish}',1)
@@ -87,8 +87,7 @@ class NetCam:
                 self.networkFps.compute()
             socket.send_string(f'{i}')
             time.sleep(0.001)
-
-        console('Stopped network broadcast.', 1)
+        console('Network thread stopped.', 1)
 
     def startServer(self):
         """
