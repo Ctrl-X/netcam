@@ -223,11 +223,13 @@ class NetCam:
         :param stream: videoStream to read from
         """
         console('Capture thread is now running.', 2)
-        # n = 0
+        n = 0
         while self.isRunning and stream.isOpened():
-            # n += 1
-            stream.grab()
-            stream.retrieve(self.imgBuffer)
+            n += 1
+            #stream.grab()
+            if n == 2:
+                stream.read(self.imgBuffer)
+                n = 0
 
             if self.displayDebug:
                 self.captureFps.compute()
