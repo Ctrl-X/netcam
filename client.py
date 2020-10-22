@@ -14,7 +14,6 @@ if __name__ == '__main__':
         key = cv2.waitKey(1)
         if key != -1:
             if key == ord('q'):  # q to quit
-                cv2.destroyAllWindows()
                 netCam.clearAll()
             elif key == ord('d'):  # d to show debug
                 netCam.toggleDebug()
