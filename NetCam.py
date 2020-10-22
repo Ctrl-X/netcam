@@ -317,19 +317,12 @@ class NetCam:
                                 (textPosX, textPosY),
                                 cv2.FONT_HERSHEY_SIMPLEX, debugTextSize, NetCam.TEXT_COLOR, thickness,
                                 cv2.LINE_AA)
-           #  textPosY += int(40 * debugTextSize)
-           #  frame = cv2.putText(frame, f'Display : {self.displayFps.fps} fps ({self.displayResolution})',
-           #                      (textPosX, textPosY), cv2.FONT_HERSHEY_SIMPLEX, debugTextSize, NetCam.TEXT_COLOR,
-           #                      thickness,
-           #                      cv2.LINE_AA)
-           #  textPosY += int(40 * debugTextSize)
-           #  frame = cv2.putText(frame, f'Network : {self.networkFps.fps} fps', (textPosX, textPosY),
-           #                      cv2.FONT_HERSHEY_SIMPLEX, debugTextSize, NetCam.TEXT_COLOR, thickness,
-           #                      cv2.LINE_AA)
-           # textPosY += int(40 * debugTextSize)
-           # frame = cv2.putText(frame, f's : see stereo', (textPosX, textPosY),
-           #                      cv2.FONT_HERSHEY_SIMPLEX, debugTextSize, NetCam.TEXT_COLOR, thickness,
-           #                      cv2.LINE_AA)
+            textPosY += int(40 * debugTextSize)
+            frame = cv2.putText(frame, f'f : fullscreen | s : see stereo | F1 to F5 : change display',
+                                (textPosX, textPosY), cv2.FONT_HERSHEY_SIMPLEX, debugTextSize, NetCam.TEXT_COLOR,
+                                thickness,
+                                cv2.LINE_AA)
+
         cv2.imshow(NetCam.DEFAULT_WINDOW_NAME, frame)
 
     def toggleDebug(self):
