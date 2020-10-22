@@ -76,10 +76,10 @@ class NetCam:
             Publish Data to any connected Server
         :param socket:
         """
-        console('\t Starting network broadcast ( ZMQ Publish) ...')
+        console('Starting network broadcast ( ZMQ Publish) ...',1)
         url_publish = "tcp://*:%s" % NetCam.DEFAULT_CLIENT_PORT
         socket.bind(url_publish)
-        console('---- Starting publishing video on ', url_publish)
+        console(f'Publishing video on {url_publish}',2)
 
         i = 0
         while self.isRunning:
@@ -87,6 +87,8 @@ class NetCam:
                 self.networkFps.compute()
             socket.send_string(f'{i}')
             time.sleep(0.001)
+
+        console('Stopped network broadcast.', 1)
 
     def startServer(self):
         """
@@ -289,11 +291,11 @@ class NetCam:
         console('Stopping Done.', 1)
 
 
-def console(text, indentLevel=0):
+def console(text, indentlevel=0):
     output = ''
-    for count in range(0, indentLevel):
+    for count in range(0, indentlevel):
         output = output + '\t'
-    output = output + time.strftime('%l:%M:%S')
+    output = output + time.ctime()
     print(f'{output} - {text}')
 
 
