@@ -4,13 +4,11 @@ from NetCam import *
 
 if __name__ == '__main__':
     print('Started main.py...')
-    netCam = NetCam()
-    netCam.setDisplayResolution('QVGA')
+    netCam = NetCam(display='QVGA')
+    netCam.startClient()
+
     print('Camera Info', netCam.getDetail())
 
-    print('Starting capture...')
-    netCam.startCapture()
-    netCam.startClient()
 
     while netCam.isRunning:
 
@@ -31,6 +29,8 @@ if __name__ == '__main__':
                 netCam.setDisplayResolution('FHD')
             elif key == 194:  # F5 to toggle fullscreen
                 netCam.toggleFullScreen()
+            else
+                print(f'Key pressed: {key}' )
         netCam.display()
 
     netCam.clearAll()
