@@ -283,18 +283,18 @@ class NetCam:
             self.clients.close()
         if self.workers != None:
             self.workers.close()
+        self.isRunning = False
+        console('Stopping Done.', 1)
         zmqContext = zmq.Context.instance()
         zmqContext.term()
-        console('Stopping Done.', 1)
-        self.isRunning = False
 
 
 def console(text, indentlevel=0):
     output = ''
     for count in range(0, indentlevel):
         output = output + '\t'
-    output = output + time.ctime()
-    print(f'{output} - {text}')
+    output = output + time.strftime('%b %d at %l:%M:%S')
+    print(f'{output} : {text}')
 
 
 def resolutionFinder(res, isstereocam=False):
