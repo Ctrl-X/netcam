@@ -77,7 +77,7 @@ class NetCam:
         console('Network thread is now running ( ZMQ Publish)...', 1)
         url_publish = "tcp://*:%s" % NetCam.DEFAULT_CLIENT_PORT
         socket.bind(url_publish)
-        console(f'Publishing video on {url_publish}',1)
+        console(f'Publishing video on {url_publish}', 1)
 
         i = 0
         while self.isRunning:
@@ -171,7 +171,6 @@ class NetCam:
         ## Launch the capture thread
         self.videoThread = Thread(target=self.update, args=([self.videoStream]), daemon=True)
         self.videoThread.start()
-
 
     def initVideoStream(self, source):
         """
@@ -275,14 +274,15 @@ class NetCam:
         self.captureFps.initTime()
 
     def clearAll(self):
-        console('Stopping NetCam...')
-        self.isRunning = False
-        self.videoStream = None
-        self.videoThread = None
-        self.threadList = []
-        zmqContext = zmq.Context.instance()
-        zmqContext.term()
-        console('Stopping Done.', 1)
+        if self.isRunning:
+            console('Stopping NetCam...')
+            self.isRunning = False
+            self.videoStream = None
+            self.videoThread = None
+            self.threadList = []
+            zmqContext = zmq.Context.instance()
+            zmqContext.term()
+            console('Stopping Done.', 1)
 
 
 def console(text, indentlevel=0):
