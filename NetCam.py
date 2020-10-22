@@ -84,6 +84,7 @@ class NetCam:
         if self.displayResolution:
             console('Init display...', 1)
             console(f'Display resolution : {self.displayResolution} ({self.displayWidth} x {self.displayHeight})', 2)
+            cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WINDOW_GUI_NORMAL)
             self.toggleFullScreen(self.fullScreen)
             time.sleep(0.1)
             console('Display is now ready.', 2)
