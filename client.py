@@ -4,7 +4,7 @@ from NetCam import *
 
 if __name__ == '__main__':
     print('Started main.py...')
-    netCam = NetCam(display='FHD', capture='FHD')
+    netCam = NetCam(display='HD', capture='HD')
     print(netCam.getDetail())
     netCam.startClient()
 
