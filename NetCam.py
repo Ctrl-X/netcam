@@ -301,17 +301,17 @@ class NetCam:
 
         if self.displayDebug:
             self.displayFps.compute()
-            debugTextSize = 0.5 if self.displayResolution == 'VGA' else 1
+            debugTextSize = 0.5 if self.displayWidth < 1280 else 1
             textPosX, textPosY = NetCam.TEXT_POSITION
             frame = cv2.putText(frame, f'Capture : {self.captureFps.fps} fps ({self.captureResolution})',
                                 (textPosX, textPosY),
                                 cv2.FONT_HERSHEY_SIMPLEX, debugTextSize, NetCam.TEXT_COLOR, 1,
                                 cv2.LINE_AA)
-            textPosY += 20
+            textPosY += 40*debugTextSize
             frame = cv2.putText(frame, f'Display : {self.displayFps.fps} fps ({self.displayResolution})',
                                 (textPosX, textPosY), cv2.FONT_HERSHEY_SIMPLEX, debugTextSize, NetCam.TEXT_COLOR, 1,
                                 cv2.LINE_AA)
-            textPosY += 20
+            textPosY += 40*debugTextSize
             frame = cv2.putText(frame, f'Network : {self.networkFps.fps} fps', (textPosX, textPosY),
                                 cv2.FONT_HERSHEY_SIMPLEX, debugTextSize, NetCam.TEXT_COLOR, 1,
                                 cv2.LINE_AA)
