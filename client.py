@@ -14,7 +14,7 @@ if __name__ == '__main__':
             if key != -1:
                 if key == ord('q'):  # q to quit
                     netCam.clearAll()
-                elif key == ord('d'):  # d to show debug
+                elif key == 35:  # Tilde to show debug
                     netCam.toggleDebug()
                 elif key == 190:  # F1
                     netCam.setDisplayResolution('QVGA')

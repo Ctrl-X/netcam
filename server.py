@@ -9,6 +9,8 @@ if __name__ == "__main__":
         if key != -1:
             if key == ord('q'):  # q to quit
                 netCam.clearAll()
+            elif key == 35:  # Tilde to show debug
+                netCam.toggleDebug()
         # netCam.display()
 
     exit()
