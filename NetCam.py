@@ -332,7 +332,8 @@ class NetCam:
             console('Stopping Done.', 1)
 
     def computeDisplayHeight(self):
-        self.displayHeight = int(self.displayWidth / self.imgWidth * self.imgHeight)
+        widthMultiplier = 2 if self.isStereoCam else 1
+        self.displayHeight = int(self.displayWidth / (self.imgWidth//widthMultiplier) * self.imgHeight)
 
 
 def console(text, indentlevel=0):
