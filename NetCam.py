@@ -177,7 +177,6 @@ class NetCam:
     def stopCapture(self):
         if self.videoStream and self.videoStream.isOpened():
             self.videoStream.release()
-        self.isRunning = False
         console('released video stream.', 1)
 
     def initVideoStream(self, source):
