@@ -17,6 +17,7 @@ class NetCam:
     DEFAULT_IP = '10.10.64.154'
     DEFAULT_SERVER_PORT = '5555'
     DEFAULT_CLIENT_PORT = '5556'
+    DEFAULT_WINDOW_NAME = 'Stream'
 
     DEFAULT_RES = 'HD'
     MAX_FPS = 60
@@ -52,31 +53,44 @@ class NetCam:
         ## Server Information
         self.threadList = []
 
-    def startClient(self):
+    def startClient(self, withdisplay=True):
         """
             Launch the network client ( broadcast the camera signal)
         """
         console('Starting NetCam Client...')
         self.isRunning = True
         ## Launch the camera capture thread
+        console('Init camera capture...', 1)
         self.startCapture()
 
         ## Launch the networdThread
+        console('Init network...', 1)
         zmqContext = zmq.Context()
         socket = zmqContext.socket(zmq.PUB)
         workerThread = Thread(target=self.clientThreadRunner, args=([socket]))
         self.threadList.append(workerThread)
         workerThread.start()
 
+        ## Launch the display Thread
+        if withdisplay:
+            console('Init display...', 1)
+            if self.fullScreen:
+                # cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WINDOW_GUI_NORMAL)
+                cv2.namedWindow('stream',cv2.WND_PROP_FULLSCREEN)
+                cv2.setWindowProperty(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+            workerThread = Thread(target=self.displayRunner, args=())
+            self.threadList.append(workerThread)
+            workerThread.start()
+
     def clientThreadRunner(self, socket):
         """
             Publish Data to any connected Server
         :param socket:
         """
-        console('Network thread is now running ( ZMQ Publish)...', 1)
+        console('Network thread is now running ( ZMQ Publish)...', 2)
         url_publish = "tcp://*:%s" % NetCam.DEFAULT_CLIENT_PORT
         socket.bind(url_publish)
-        console(f'Publishing video on {url_publish}', 1)
+        console(f'Publishing video on {url_publish}', 2)
 
         i = 0
         while self.isRunning:
@@ -148,7 +162,6 @@ class NetCam:
         """
             Start capturing video frame and put them in the imgBuffer
         """
-        console('Init camera capture...')
         ## Close any previously opened stream
         if self.isRunning and self.videoStream:
             self.videoStream.release()
@@ -160,16 +173,14 @@ class NetCam:
         self.imgWidth = int(self.videoStream.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.imgHeight = int(self.videoStream.get(cv2.CAP_PROP_FRAME_HEIGHT))
         self.fps = self.videoStream.get(cv2.CAP_PROP_FPS)
-        console(f'Capture resolution : {self.imgWidth} x {self.imgHeight} @ {self.fps}', 1)
-        console(f'Display resolution : {self.displayWidth} x {self.displayHeight} @ {self.fps}', 1)
-
+        console(f'Capture resolution : {self.imgWidth} x {self.imgHeight} @ {self.fps}', 2)
         self.imgBuffer = np.empty(shape=(self.imgHeight, self.imgWidth, 3), dtype=np.uint8)
 
         ## Guarantee the first frame
         self.videoStream.read(self.imgBuffer)
 
         ## Launch the capture thread
-        videoThread = Thread(target=self.videoThreadRunner, args=([self.videoStream]), daemon=True)
+        videoThread = Thread(target=self.captureThreadRunner, args=([self.videoStream]), daemon=True)
         videoThread.start()
 
     def initVideoStream(self, source):
@@ -196,12 +207,12 @@ class NetCam:
 
         return videoStream
 
-    def videoThreadRunner(self, stream):
+    def captureThreadRunner(self, stream):
         """
             Read next stream frame in a daemon thread
         :param stream: videoStream to read from
         """
-        console('Capture thread is now running...', 1)
+        console('Capture thread is now running.', 2)
         # n = 0
         while self.isRunning and stream.isOpened():
             # n += 1
@@ -214,10 +225,10 @@ class NetCam:
 
         if self.videoStream and self.videoStream.isOpened():
             self.videoStream.release()
-            console('Released camera.', 1)
+            console('Released camera.', 2)
 
         self.videoStream = None
-        console('Capture thread stopped.', 1)
+        console('Capture thread stopped.', 2)
 
     def getDetail(self):
         return ({
@@ -242,39 +253,40 @@ class NetCam:
     def toggleFullScreen(self):
         self.fullScreen = not self.fullScreen
 
-    def display(self):
-        frame = self.imgBuffer
-        if self.isStereoCam:
-            # the Display is not in stereo, so remove the half of the picture
-            frame = frame[0:self.imgHeight, 0:self.imgWidth // 2]
+    def displayRunner(self):
 
-        if self.displayWidth != self.imgWidth:
-            # Resize the picture for display purpose
-            frame = cv2.resize(frame, (self.displayWidth, self.displayHeight))
+        console('Display thread is now running.', 2)
+        console(f'Display resolution : {self.displayWidth} x {self.displayHeight} @ {self.fps}', 2)
+        while self.isRunning:
+            frame = self.imgBuffer
+            if self.isStereoCam:
+                # the Display is not in stereo, so remove the half of the picture
+                frame = frame[0:self.imgHeight, 0:self.imgWidth // 2]
 
-        if self.displayDebug:
-            self.displayFps.compute()
-            textPosX, textPosY = NetCam.TEXT_POSITION
-            frame = cv2.putText(frame, f'Capture : {self.captureFps.fps} fps ({self.captureResolution})',
-                                (textPosX, textPosY),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, NetCam.TEXT_COLOR, 1,
-                                cv2.LINE_AA)
-            textPosY += 20
-            frame = cv2.putText(frame, f'Display : {self.displayFps.fps} fps ({self.displayResolution})',
-                                (textPosX, textPosY), cv2.FONT_HERSHEY_SIMPLEX, 0.5, NetCam.TEXT_COLOR, 1,
-                                cv2.LINE_AA)
-            textPosY += 20
-            frame = cv2.putText(frame, f'Network : {self.networkFps.fps} fps', (textPosX, textPosY),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, NetCam.TEXT_COLOR, 1,
-                                cv2.LINE_AA)
+            if self.displayWidth != self.imgWidth:
+                # Resize the picture for display purpose
+                frame = cv2.resize(frame, (self.displayWidth, self.displayHeight))
 
-        # TODO : Fullscreen Ne fonctionne pas
-        if self.fullScreen:
-            cv2.namedWindow('stream', cv2.WINDOW_GUI_NORMAL)
-            # cv2.namedWindow('stream',cv2.WND_PROP_FULLSCREEN)
-            cv2.setWindowProperty('stream', cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+            if self.displayDebug:
+                self.displayFps.compute()
+                textPosX, textPosY = NetCam.TEXT_POSITION
+                frame = cv2.putText(frame, f'Capture : {self.captureFps.fps} fps ({self.captureResolution})',
+                                    (textPosX, textPosY),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, NetCam.TEXT_COLOR, 1,
+                                    cv2.LINE_AA)
+                textPosY += 20
+                frame = cv2.putText(frame, f'Display : {self.displayFps.fps} fps ({self.displayResolution})',
+                                    (textPosX, textPosY), cv2.FONT_HERSHEY_SIMPLEX, 0.5, NetCam.TEXT_COLOR, 1,
+                                    cv2.LINE_AA)
+                textPosY += 20
+                frame = cv2.putText(frame, f'Network : {self.networkFps.fps} fps', (textPosX, textPosY),
+                                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, NetCam.TEXT_COLOR, 1,
+                                    cv2.LINE_AA)
 
-        cv2.imshow('stream', frame)
+            cv2.imshow(NetCam.DEFAULT_WINDOW_NAME, frame)
+
+        console('Display thread stopped.', 1)
+
 
     def toggleDebug(self):
         self.displayDebug = not self.displayDebug

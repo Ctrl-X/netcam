@@ -6,7 +6,9 @@ if __name__ == '__main__':
     print('Started main.py...')
     netCam = NetCam(display='QVGA', capture='VGA')
     print(netCam.getDetail())
-    netCam.startClient()
+    netCam.startClient(withdisplay=True)
+
+    cv2.getWindowProperty('window-name', 0)
 
     try:
         while netCam.isRunning:
@@ -28,7 +30,6 @@ if __name__ == '__main__':
                     netCam.toggleFullScreen()
                 else:
                     print(f'Key pressed: {key}')
-            netCam.display()
     except KeyboardInterrupt:
         netCam.clearAll()
     exit()
