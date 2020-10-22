@@ -6,6 +6,7 @@
 ##  Version : 0.1
 ################################################################################
 
+from datetime import date
 import time
 from threading import Thread
 import zmq
@@ -34,7 +35,7 @@ class NetCam:
         self.isStereoCam = isstereocam
         self.source = source
         self.imgWidth, self.imgHeight = resolutionFinder(self.captureResolution, self.isStereoCam)
-        self.displayWidth, self.displayHeight = resolutionFinder(self.displayResolution,True)
+        self.displayWidth, self.displayHeight = resolutionFinder(self.displayResolution, True)
         self.fps = NetCam.MAX_FPS
         self.imgBuffer = [None]
         self.isRunning = False
@@ -150,7 +151,7 @@ class NetCam:
         """
             Start capturing video frame and put them in the imgBuffer
         """
-        console('-- Init camera capture...')
+        console('Init camera capture...')
         ## Close any previously opened stream
         if self.isRunning and self.videoStream:
             self.videoStream.release()
@@ -162,7 +163,7 @@ class NetCam:
         self.imgWidth = int(self.videoStream.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.imgHeight = int(self.videoStream.get(cv2.CAP_PROP_FRAME_HEIGHT))
         self.fps = self.videoStream.get(cv2.CAP_PROP_FPS)
-        console(f'---- Capture resolution : {self.imgWidth}x{self.imgHeight}@{self.fps}')
+        console(f'Capture resolution : {self.imgWidth} x {self.imgHeight} @ {self.fps}', 1)
 
         self.imgBuffer = np.empty(shape=(self.imgHeight, self.imgWidth, 3), dtype=np.uint8)
 
@@ -177,7 +178,7 @@ class NetCam:
         if self.videoStream and self.videoStream.isOpened():
             self.videoStream.release()
         self.isRunning = False
-        console('-- released video stream.')
+        console('released video stream.', 1)
 
     def initVideoStream(self, source):
         """
@@ -208,7 +209,7 @@ class NetCam:
             Read next stream frame in a daemon thread
         :param stream: videoStream to read from
         """
-        console('-- Capture thread is now running...')
+        console('Capture thread is now running...', 1)
         # n = 0
         while self.isRunning and stream.isOpened():
             # n += 1
@@ -218,7 +219,7 @@ class NetCam:
             if self.displayDebug:
                 self.captureFps.compute()
             time.sleep(0.001)
-        console('-- Capture thread stopped.')
+        console('Capture thread stopped.', 1)
 
     def getDetail(self):
         return ({
@@ -286,14 +287,18 @@ class NetCam:
             self.workers.close()
         zmqContext = zmq.Context.instance()
         zmqContext.term()
-        console('-- Stopping Done.')
+        console('Stopping Done.', 1)
 
 
-def console(text):
-    print(text)
+def console(text, indentLevel=0):
+    output = ''
+    for count in range(0, indentLevel):
+        output = output + '\t'
+    output = output + date.today()
+    print(f'{output} - {text}')
 
 
-def resolutionFinder(res, isstereocam = False):
+def resolutionFinder(res, isstereocam=False):
     widthMultiplier = 2 if isstereocam else 1
     switcher = {
         'QVGA': (320 * widthMultiplier, 240),
