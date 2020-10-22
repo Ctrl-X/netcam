@@ -254,6 +254,7 @@ class NetCam:
 
     def toggleFullScreen(self):
         self.fullScreen = not self.fullScreen
+        console(f'Toggle fullscreen : {self.fullScreen}')
         if self.fullScreen:
             # cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WINDOW_GUI_NORMAL)
             cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_FULLSCREEN)
@@ -262,6 +263,12 @@ class NetCam:
             cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WINDOW_GUI_NORMAL)
 
     def display(self):
+        result = cv2.getWindowProperty(NetCam.DEFAULT_WINDOW_NAME, 0)
+        if result == -1:
+            # the window has been closed
+            self.clearAll()
+            return
+
         frame = self.imgBuffer
         if self.isStereoCam:
             # the Display is not in stereo, so remove the half of the picture
@@ -287,7 +294,6 @@ class NetCam:
                                 cv2.FONT_HERSHEY_SIMPLEX, 0.5, NetCam.TEXT_COLOR, 1,
                                 cv2.LINE_AA)
         cv2.imshow(NetCam.DEFAULT_WINDOW_NAME, frame)
-
 
     def toggleDebug(self):
         self.displayDebug = not self.displayDebug
