@@ -84,14 +84,7 @@ class NetCam:
         if self.displayResolution:
             console('Init display...', 1)
             console(f'Display resolution : {self.displayResolution} ({self.displayWidth} x {self.displayHeight})', 2)
-            if self.fullScreen:
-                # cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WINDOW_GUI_NORMAL)
-                cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_FULLSCREEN)
-                cv2.setWindowProperty(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-                cv2.setWindowProperty(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_TOPMOST, True)
-            else:
-                cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WINDOW_GUI_NORMAL)
-                cv2.setWindowProperty(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_TOPMOST, False)
+            self.toggleFullScreen(self.fullScreen)
             time.sleep(0.1)
             console('Display is now ready.', 2)
 
@@ -269,12 +262,12 @@ class NetCam:
         self.fullScreen = isFullScreen if isFullScreen is not None else not self.fullScreen
         console(f'Toggle fullscreen : {self.fullScreen}')
         if self.fullScreen:
-            # cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WINDOW_GUI_NORMAL)
             cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_FULLSCREEN)
             cv2.setWindowProperty(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+            cv2.setWindowProperty(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_TOPMOST, True)
         else:
             cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WINDOW_GUI_NORMAL)
-            cv2.setWindowProperty(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_NORMAL)
+            cv2.setWindowProperty(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_TOPMOST, False)
 
     def display(self):
         if not self.isRunning:
@@ -366,7 +359,7 @@ def resolutionFinder(res, isstereocam=False):
     #     'FHD': (1920 * widthMultiplier, 1080),
     #     '2K': (2048 * widthMultiplier, 1080)
     # }
-    return switcher.get(res,640 * widthMultiplier)
+    return switcher.get(res, 640 * widthMultiplier)
 
 
 class FpsCatcher:
