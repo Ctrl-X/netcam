@@ -309,7 +309,7 @@ class NetCam:
             textPosX, textPosY = NetCam.TEXT_POSITION
             textPosX += int(40 * debugTextSize)
             textPosY += int(40 * debugTextSize)
-            frame = cv2.putText(frame, f'Capture : {self.captureFps.fps} fps ({self.captureResolution})',
+            frame = cv2.putText(frame, f'Capture : {debugTextSize} fps ({self.captureResolution})',
                                 (textPosX, textPosY),
                                 cv2.FONT_HERSHEY_SIMPLEX, debugTextSize, NetCam.TEXT_COLOR, 1,
                                 cv2.LINE_AA)
