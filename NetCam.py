@@ -357,11 +357,11 @@ def console(text, indentlevel=0):
 def resolutionFinder(res, isstereocam=False):
     widthMultiplier = 2 if isstereocam else 1
     switcher = {
-        'QVGA': 320 * widthMultiplier,
-        'VGA': 640 * widthMultiplier,
-        'HD': 1280 * widthMultiplier,
-        'FHD': 1920 * widthMultiplier,
-        '2K': 2048 * widthMultiplier
+        'QVGA': 320 ,
+        'VGA': 640 ,
+        'HD': 1280 ,
+        'FHD': 1920 ,
+        '2K': 2048
     }
     # switcher = {
     #     'QVGA': (320 * widthMultiplier, 240),
