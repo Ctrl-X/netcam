@@ -52,6 +52,7 @@ class NetCam:
         self.serverIp = serverip
         self.serverPort = serverport
         self.displayDebug = False
+        self.displayStereo = False
         self.displayFps = FpsCatcher()
         self.captureFps = FpsCatcher()
         self.networkFps = FpsCatcher()
@@ -303,7 +304,7 @@ class NetCam:
             # Resize the picture for display purpose
             frame = cv2.resize(frame, (self.displayWidth, self.displayHeight))
 
-        if self.displayDebug :
+        if self.displayDebug:
             self.displayFps.compute()
             debugTextSize = self.displayWidth / 1280
             thickness = 1 if self.displayWidth < 1280 else 2
@@ -324,6 +325,31 @@ class NetCam:
                                 cv2.LINE_AA)
 
         cv2.imshow(NetCam.DEFAULT_WINDOW_NAME, frame)
+        self.listenKeyboard()
+
+    def listenKeyboard(self):
+        key = cv2.waitKey(20)
+        if key != -1:
+            if key == ord('q'):  # q to quit
+                self.clearAll()
+            elif key == 35:  # Tilde to show debug
+                self.toggleDebug()
+            elif key == 190:  # F1
+                self.setDisplayResolution('QVGA')
+            elif key == 191:  # F2
+                self.setDisplayResolution('VGA')
+            elif key == 192:  # F3
+                self.setDisplayResolution('HD')
+            elif key == 193:  # F4
+                self.setDisplayResolution('FHD')
+            elif key == 194:  # F5
+                self.setDisplayResolution('2K')
+            elif key == ord('f'):  # F to toggle fullscreen
+                self.toggleFullScreen()
+            elif key == 27:  # Esc key was pressed,
+                self.toggleFullScreen(False)
+            else:
+                print(f'Key pressed: {key}')
 
     def toggleDebug(self):
         self.displayDebug = not self.displayDebug
