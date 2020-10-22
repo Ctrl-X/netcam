@@ -244,7 +244,9 @@ class NetCam:
         frame = self.imgBuffer
         if self.displayWidth != self.imgWidth:
             if self.isStereoCam:
-                frame = frame[0:self.imgHeight, 0:640]
+                width = self.imgWidth/2
+                console(width)
+                frame = frame[0:self.imgHeight, 0:width]
             frame = cv2.resize(frame, (self.displayWidth, self.displayHeight))
         if self.displayDebug:
             self.displayFps.compute()
