@@ -74,10 +74,6 @@ class NetCam:
         ## Launch the display Thread
         if withdisplay:
             console('Init display...', 1)
-            if self.fullScreen:
-                # cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WINDOW_GUI_NORMAL)
-                cv2.namedWindow('stream',cv2.WND_PROP_FULLSCREEN)
-                cv2.setWindowProperty(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
             workerThread = Thread(target=self.displayRunner, args=())
             self.threadList.append(workerThread)
             workerThread.start()
@@ -87,10 +83,10 @@ class NetCam:
             Publish Data to any connected Server
         :param socket:
         """
-        console('Network thread is now running ( ZMQ Publish)...', 2)
         url_publish = "tcp://*:%s" % NetCam.DEFAULT_CLIENT_PORT
-        socket.bind(url_publish)
         console(f'Publishing video on {url_publish}', 2)
+        socket.bind(url_publish)
+        console('Network thread is now running ( ZMQ Publish)...', 2)
 
         i = 0
         while self.isRunning:
@@ -255,8 +251,12 @@ class NetCam:
 
     def displayRunner(self):
 
-        console('Display thread is now running.', 2)
         console(f'Display resolution : {self.displayWidth} x {self.displayHeight} @ {self.fps}', 2)
+        if self.fullScreen:
+            # cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WINDOW_GUI_NORMAL)
+            cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_FULLSCREEN)
+            cv2.setWindowProperty(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+        console('Display thread is now running.', 2)
         while self.isRunning:
             frame = self.imgBuffer
             if self.isStereoCam:
