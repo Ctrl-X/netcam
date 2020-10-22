@@ -308,11 +308,11 @@ class NetCam:
                                 (textPosX, textPosY),
                                 cv2.FONT_HERSHEY_SIMPLEX, debugTextSize, NetCam.TEXT_COLOR, 1,
                                 cv2.LINE_AA)
-            textPosY += 40*debugTextSize
+            textPosY += 40
             frame = cv2.putText(frame, f'Display : {self.displayFps.fps} fps ({self.displayResolution})',
                                 (textPosX, textPosY), cv2.FONT_HERSHEY_SIMPLEX, debugTextSize, NetCam.TEXT_COLOR, 1,
                                 cv2.LINE_AA)
-            textPosY += 40*debugTextSize
+            textPosY += 40
             frame = cv2.putText(frame, f'Network : {self.networkFps.fps} fps', (textPosX, textPosY),
                                 cv2.FONT_HERSHEY_SIMPLEX, debugTextSize, NetCam.TEXT_COLOR, 1,
                                 cv2.LINE_AA)
