@@ -286,35 +286,34 @@ class NetCam:
             if isWindowClosed == -1:
                 # the window has been closed
                 self.clearAll()
-
-            frame = self.imgBuffer
-            if self.isStereoCam:
-                # the Display is not in stereo, so remove the half of the picture
-                frame = frame[0:self.imgHeight, 0:self.imgWidth // 2]
-
-            if self.displayWidth != self.imgWidth:
-                # Resize the picture for display purpose
-                frame = cv2.resize(frame, (self.displayWidth, self.displayHeight))
-
-            if self.displayDebug:
-                self.displayFps.compute()
-                textPosX, textPosY = NetCam.TEXT_POSITION
-                frame = cv2.putText(frame, f'Capture : {self.captureFps.fps} fps ({self.captureResolution})',
-                                    (textPosX, textPosY),
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, NetCam.TEXT_COLOR, 1,
-                                    cv2.LINE_AA)
-                textPosY += 20
-                frame = cv2.putText(frame, f'Display : {self.displayFps.fps} fps ({self.displayResolution})',
-                                    (textPosX, textPosY), cv2.FONT_HERSHEY_SIMPLEX, 0.5, NetCam.TEXT_COLOR, 1,
-                                    cv2.LINE_AA)
-                textPosY += 20
-                frame = cv2.putText(frame, f'Network : {self.networkFps.fps} fps', (textPosX, textPosY),
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, NetCam.TEXT_COLOR, 1,
-                                    cv2.LINE_AA)
-            cv2.imshow(NetCam.DEFAULT_WINDOW_NAME, frame)
         except:
-            console("Nothing to display")
+            self.clearAll()
+            return
+        frame = self.imgBuffer
+        if self.isStereoCam:
+            # the Display is not in stereo, so remove the half of the picture
+            frame = frame[0:self.imgHeight, 0:self.imgWidth // 2]
 
+        if self.displayWidth != self.imgWidth:
+            # Resize the picture for display purpose
+            frame = cv2.resize(frame, (self.displayWidth, self.displayHeight))
+
+        if self.displayDebug:
+            self.displayFps.compute()
+            textPosX, textPosY = NetCam.TEXT_POSITION
+            frame = cv2.putText(frame, f'Capture : {self.captureFps.fps} fps ({self.captureResolution})',
+                                (textPosX, textPosY),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, NetCam.TEXT_COLOR, 1,
+                                cv2.LINE_AA)
+            textPosY += 20
+            frame = cv2.putText(frame, f'Display : {self.displayFps.fps} fps ({self.displayResolution})',
+                                (textPosX, textPosY), cv2.FONT_HERSHEY_SIMPLEX, 0.5, NetCam.TEXT_COLOR, 1,
+                                cv2.LINE_AA)
+            textPosY += 20
+            frame = cv2.putText(frame, f'Network : {self.networkFps.fps} fps', (textPosX, textPosY),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, NetCam.TEXT_COLOR, 1,
+                                cv2.LINE_AA)
+        cv2.imshow(NetCam.DEFAULT_WINDOW_NAME, frame)
 
     def toggleDebug(self):
         self.displayDebug = not self.displayDebug
