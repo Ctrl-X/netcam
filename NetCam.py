@@ -34,13 +34,14 @@ class NetCam:
         self.displayResolution = display
         self.isStereoCam = isstereocam
         self.source = source
-        self.imgWidth, self.imgHeight = resolutionFinder(self.captureResolution, self.isStereoCam)
+        self.imgWidth = resolutionFinder(self.captureResolution, self.isStereoCam)
+        self.imgHeight = None
 
         if self.displayResolution:
-            self.displayWidth, self.displayHeight = resolutionFinder(self.displayResolution)
+            self.displayWidth = resolutionFinder(self.displayResolution)
         else:
             self.displayWidth: None
-            self.displayHeight: None
+        self.displayHeight: None
 
         self.fps = NetCam.MAX_FPS
         self.imgBuffer = [None]
@@ -82,13 +83,15 @@ class NetCam:
         ## Launch the display Thread (main thread)
         if self.displayResolution:
             console('Init display...', 1)
-            console(f'Display resolution : {self.displayWidth} x {self.displayHeight}', 2)
+            console(f'Display resolution : {self.displayResolution} ({self.displayWidth} x {self.displayHeight})', 2)
             if self.fullScreen:
                 # cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WINDOW_GUI_NORMAL)
                 cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_FULLSCREEN)
                 cv2.setWindowProperty(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+                cv2.setWindowProperty(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_TOPMOST, True)
             else:
                 cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WINDOW_GUI_NORMAL)
+                cv2.setWindowProperty(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_TOPMOST, False)
             time.sleep(0.1)
             console('Display is now ready.', 2)
 
@@ -184,6 +187,7 @@ class NetCam:
         ## Get the real width, height and fps supported by the camera
         self.imgWidth = int(self.videoStream.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.imgHeight = int(self.videoStream.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        self.computeDisplayHeight()
         self.fps = self.videoStream.get(cv2.CAP_PROP_FPS)
         console(f'Capture resolution : {self.imgWidth} x {self.imgHeight} @ {self.fps}', 2)
         self.imgBuffer = np.empty(shape=(self.imgHeight, self.imgWidth, 3), dtype=np.uint8)
@@ -206,7 +210,7 @@ class NetCam:
         assert self.isRunning, 'Unable to open camera %s . Is your camera connected (look for videoX in /dev/ ? ' % source
 
         ## Get the requested resolution
-        width, height = resolutionFinder(self.captureResolution, self.isStereoCam)
+        width = resolutionFinder(self.captureResolution, self.isStereoCam)
 
         ## Define all video settings
         videoStream.set(cv2.CAP_PROP_BUFFERSIZE,
@@ -215,7 +219,6 @@ class NetCam:
         videoStream.set(cv2.CAP_PROP_FOURCC,
                         cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))  # define the compression to mjpg
         videoStream.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-        videoStream.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
 
         return videoStream
 
@@ -251,7 +254,6 @@ class NetCam:
             'isStereo': self.isStereoCam,
             'width': self.imgWidth,
             'height': self.imgHeight,
-            'height': self.imgHeight,
             'maxFps': self.fps,
             'isRunning': self.isRunning,
         })
@@ -259,7 +261,8 @@ class NetCam:
     def setDisplayResolution(self, resolution):
         if (resolution != None):
             self.displayResolution = resolution
-            self.displayWidth, self.displayHeight = resolutionFinder(resolution)
+            self.displayWidth = resolutionFinder(resolution)
+            self.computeDisplayHeight()
             console(f'Changed Display resolution for : {resolution} ({self.displayWidth} x {self.displayHeight})')
 
     def toggleFullScreen(self, isFullScreen=None):
@@ -298,7 +301,7 @@ class NetCam:
             # the Display is not in stereo, so remove the half of the picture
             frame = frame[0:self.imgHeight, 0:self.imgWidth // 2]
 
-        if self.displayWidth != self.imgWidth:
+        if self.displayHeight != self.imgHeight:
             # Resize the picture for display purpose
             frame = cv2.resize(frame, (self.displayWidth, self.displayHeight))
 
@@ -335,6 +338,9 @@ class NetCam:
             time.sleep(1)
             console('Stopping Done.', 1)
 
+    def computeDisplayHeight(self):
+        self.displayHeight = int(self.displayWidth / self.imgWidth * self.imgHeight)
+
 
 def console(text, indentlevel=0):
     output = ''
@@ -347,11 +353,11 @@ def console(text, indentlevel=0):
 def resolutionFinder(res, isstereocam=False):
     widthMultiplier = 2 if isstereocam else 1
     switcher = {
-        'QVGA': (320 * widthMultiplier, 180),
-        'VGA': (640 * widthMultiplier, 360),
-        'HD': (1280 * widthMultiplier, 720),
-        'FHD': (1920 * widthMultiplier, 1080),
-        '2K': (2048 * widthMultiplier, 1152)
+        'QVGA': 320 * widthMultiplier,
+        'VGA': 640 * widthMultiplier,
+        'HD': 1280 * widthMultiplier,
+        'FHD': 1920 * widthMultiplier,
+        '2K': 2048 * widthMultiplier
     }
     # switcher = {
     #     'QVGA': (320 * widthMultiplier, 240),
@@ -360,7 +366,7 @@ def resolutionFinder(res, isstereocam=False):
     #     'FHD': (1920 * widthMultiplier, 1080),
     #     '2K': (2048 * widthMultiplier, 1080)
     # }
-    return switcher.get(res, (640 * widthMultiplier, 480))
+    return switcher.get(res,640 * widthMultiplier)
 
 
 class FpsCatcher:
