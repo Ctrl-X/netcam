@@ -31,11 +31,17 @@ class NetCam:
                  source='0', fullscreen=False):
 
         self.captureResolution = capture
-        self.displayResolution = display if display else capture
+        self.displayResolution = display
         self.isStereoCam = isstereocam
         self.source = source
         self.imgWidth, self.imgHeight = resolutionFinder(self.captureResolution, self.isStereoCam)
-        self.displayWidth, self.displayHeight = resolutionFinder(self.displayResolution)
+
+        if self.displayResolution:
+            self.displayWidth, self.displayHeight = resolutionFinder(self.displayResolution)
+        else:
+            self.displayWidth: None
+            self.displayHeight: None
+
         self.fps = NetCam.MAX_FPS
         self.imgBuffer = [None]
         self.isRunning = False
@@ -53,7 +59,7 @@ class NetCam:
         ## Server Information
         self.threadList = []
 
-    def startClient(self, withdisplay=True):
+    def startClient(self):
         """
             Launch the network client ( broadcast the camera signal)
         """
@@ -74,7 +80,7 @@ class NetCam:
         time.sleep(0.1)
 
         ## Launch the display Thread (main thread)
-        if withdisplay:
+        if self.displayResolution:
             console(f'Display resolution : {self.displayWidth} x {self.displayHeight}', 2)
             if self.fullScreen:
                 # cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WINDOW_GUI_NORMAL)
@@ -264,8 +270,15 @@ class NetCam:
             cv2.setWindowProperty(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
         else:
             cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WINDOW_GUI_NORMAL)
+            cv2.setWindowProperty(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_NORMAL)
 
     def display(self):
+        if not self.displayResolution:
+            # No Display was setup
+            console('You need to setup the display Resolution in NetCam constructor. ex : NetCam(display=\'VGA\'')
+            time(1)
+            return
+
         result = cv2.getWindowProperty(NetCam.DEFAULT_WINDOW_NAME, 0)
         if result == -1:
             # the window has been closed
