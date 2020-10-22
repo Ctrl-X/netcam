@@ -73,12 +73,9 @@ class NetCam:
         workerThread.start()
         time.sleep(0.1)
 
-        ## Launch the display Thread
+        ## Launch the display Thread (main thread)
         if withdisplay:
-            console('Init display...', 1)
-            workerThread = Thread(target=self.displayRunner, args=())
-            self.threadList.append(workerThread)
-            workerThread.start()
+            self.displayRunner()
             time.sleep(0.1)
 
         console('NetCam Client started !')
@@ -256,7 +253,7 @@ class NetCam:
 
     def displayRunner(self):
 
-        console(f'Display resolution : {self.displayWidth} x {self.displayHeight} @ {self.fps}', 2)
+        console(f'Display resolution : {self.displayWidth} x {self.displayHeight}', 2)
         if self.fullScreen:
             # cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WINDOW_GUI_NORMAL)
             cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_FULLSCREEN)
@@ -287,9 +284,8 @@ class NetCam:
                 frame = cv2.putText(frame, f'Network : {self.networkFps.fps} fps', (textPosX, textPosY),
                                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, NetCam.TEXT_COLOR, 1,
                                     cv2.LINE_AA)
-
             cv2.imshow(NetCam.DEFAULT_WINDOW_NAME, frame)
-
+            time.sleep(0.001)
         console('Display thread stopped.', 1)
 
     def toggleDebug(self):
