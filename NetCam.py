@@ -303,7 +303,7 @@ class NetCam:
 
         if self.displayDebug:
             self.displayFps.compute()
-            debugTextSize = self.displayWidth / 1280
+            debugTextSize = self.displayWidth / 640
             thickness = 1 if self.displayWidth < 1280 else 2
 
             textPosX, textPosY = NetCam.TEXT_POSITION
@@ -311,29 +311,29 @@ class NetCam:
             textPosY += int(40 * debugTextSize)
             frame = cv2.putText(frame, f'Capture : {debugTextSize} fps ({self.captureResolution})',
                                 (textPosX, textPosY),
-                                cv2.FONT_HERSHEY_SIMPLEX, debugTextSize, NetCam.TEXT_COLOR, 1,
+                                cv2.FONT_HERSHEY_SIMPLEX, debugTextSize, NetCam.TEXT_COLOR, thickness,
                                 cv2.LINE_AA)
             textPosY += int(40 * debugTextSize)
             frame = cv2.putText(frame, f'Display : {thickness} fps ({self.displayResolution})',
                                 (textPosX, textPosY), cv2.FONT_HERSHEY_SIMPLEX, debugTextSize, NetCam.TEXT_COLOR,
-                                1,
+                                thickness,
                                 cv2.LINE_AA)
             textPosY += int(40 * debugTextSize)
             frame = cv2.putText(frame, f'Network : {self.networkFps.fps} fps', (textPosX, textPosY),
-                                cv2.FONT_HERSHEY_SIMPLEX, debugTextSize, NetCam.TEXT_COLOR, 1,
+                                cv2.FONT_HERSHEY_SIMPLEX, debugTextSize, NetCam.TEXT_COLOR, thickness,
                                 cv2.LINE_AA)
             # frame = cv2.putText(frame, f'Capture : {self.captureFps.fps} fps ({self.captureResolution})',
             #                     (textPosX, textPosY),
-            #                     cv2.FONT_HERSHEY_SIMPLEX, debugTextSize, NetCam.TEXT_COLOR, 1,
+            #                     cv2.FONT_HERSHEY_SIMPLEX, debugTextSize, NetCam.TEXT_COLOR, thickness,
             #                     cv2.LINE_AA)
             # textPosY += int(40 * debugTextSize)
             # frame = cv2.putText(frame, f'Display : {self.displayFps.fps} fps ({self.displayResolution})',
             #                     (textPosX, textPosY), cv2.FONT_HERSHEY_SIMPLEX, debugTextSize, NetCam.TEXT_COLOR,
-            #                     1,
+            #                     thickness,
             #                     cv2.LINE_AA)
             # textPosY += int(40 * debugTextSize)
             # frame = cv2.putText(frame, f'Network : {self.networkFps.fps} fps', (textPosX, textPosY),
-            #                     cv2.FONT_HERSHEY_SIMPLEX, debugTextSize, NetCam.TEXT_COLOR, 1,
+            #                     cv2.FONT_HERSHEY_SIMPLEX, debugTextSize, NetCam.TEXT_COLOR, thickness,
             #                     cv2.LINE_AA)
         cv2.imshow(NetCam.DEFAULT_WINDOW_NAME, frame)
 
