@@ -81,6 +81,7 @@ class NetCam:
 
         ## Launch the display Thread (main thread)
         if self.displayResolution:
+            console('Init display...', 1)
             console(f'Display resolution : {self.displayWidth} x {self.displayHeight}', 2)
             if self.fullScreen:
                 # cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WINDOW_GUI_NORMAL)
@@ -236,10 +237,10 @@ class NetCam:
 
         if self.videoStream and self.videoStream.isOpened():
             self.videoStream.release()
-            console('Released camera.', 2)
+            console('Released camera.', 1)
 
         self.videoStream = None
-        console('Capture thread stopped.', 2)
+        console('Capture thread stopped.', 1)
 
     def getDetail(self):
         return ({
@@ -288,6 +289,8 @@ class NetCam:
                 console("Closing window...")
                 self.clearAll()
         except:
+            console("Closing display...")
+
             self.clearAll()
             return
         frame = self.imgBuffer
