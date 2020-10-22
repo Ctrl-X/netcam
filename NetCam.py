@@ -161,6 +161,7 @@ class NetCam:
         self.imgHeight = int(self.videoStream.get(cv2.CAP_PROP_FRAME_HEIGHT))
         self.fps = self.videoStream.get(cv2.CAP_PROP_FPS)
         console(f'Capture resolution : {self.imgWidth} x {self.imgHeight} @ {self.fps}', 1)
+        console(f'Display resolution : {self.displayWidth} x {self.displayHeight} @ {self.fps}', 1)
 
         self.imgBuffer = np.empty(shape=(self.imgHeight, self.imgWidth, 3), dtype=np.uint8)
 
@@ -236,16 +237,21 @@ class NetCam:
         if (resolution != None):
             self.displayResolution = resolution
             self.displayWidth, self.displayHeight = resolutionFinder(resolution)
+            console(f'Changed Display resolution for : {resolution} ({self.displayWidth} x {self.displayHeight})')
 
     def toggleFullScreen(self):
         self.fullScreen = not self.fullScreen
 
     def display(self):
         frame = self.imgBuffer
+        if self.isStereoCam:
+            # the Display is not in stereo, so remove the half of the picture
+            frame = frame[0:self.imgHeight, 0:self.imgWidth // 2]
+
         if self.displayWidth != self.imgWidth:
-            if self.isStereoCam:
-                frame = frame[0:self.imgHeight, 0:self.imgWidth//2]
+            # Resize the picture for display purpose
             frame = cv2.resize(frame, (self.displayWidth, self.displayHeight))
+
         if self.displayDebug:
             self.displayFps.compute()
             textPosX, textPosY = NetCam.TEXT_POSITION
