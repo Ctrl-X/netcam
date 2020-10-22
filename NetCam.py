@@ -272,14 +272,15 @@ class NetCam:
             cv2.setWindowProperty(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_TOPMOST, 0.0)
 
     def display(self):
-        if not self.isRunning:
-            return
+
         if not self.displayResolution:
             # No Display was setup
             console('You need to setup the display Resolution in NetCam constructor. ex : NetCam(display=\'VGA\'')
             time(1)
             return
-
+        if not self.isRunning:
+            cv2.destroyAllWindows()
+            return
         try:
             isWindowClosed = cv2.getWindowProperty(NetCam.DEFAULT_WINDOW_NAME, 0)
             if isWindowClosed == -1:
@@ -302,8 +303,8 @@ class NetCam:
 
         if self.displayDebug:
             self.displayFps.compute()
-            thickness = int(self.displayWidth / 640)
-            thickness = thickness if thickness > 0 else 1
+            thickness = self.displayWidth / 640
+            #thickness = thickness if thickness > 0 else 1
             debugTextSize = thickness / 2
             textPosX, textPosY = NetCam.TEXT_POSITION
             textPosX += int(40 * debugTextSize)
@@ -312,11 +313,12 @@ class NetCam:
                                 (textPosX, textPosY),
                                 cv2.FONT_HERSHEY_SIMPLEX, debugTextSize, NetCam.TEXT_COLOR, thickness,
                                 cv2.LINE_AA)
-            textPosY += int(40*debugTextSize)
+            textPosY += int(40 * debugTextSize)
             frame = cv2.putText(frame, f'Display : {self.displayFps.fps} fps ({self.displayResolution})',
-                                (textPosX, textPosY), cv2.FONT_HERSHEY_SIMPLEX, debugTextSize, NetCam.TEXT_COLOR, thickness,
+                                (textPosX, textPosY), cv2.FONT_HERSHEY_SIMPLEX, debugTextSize, NetCam.TEXT_COLOR,
+                                thickness,
                                 cv2.LINE_AA)
-            textPosY += int(40*debugTextSize)
+            textPosY += int(40 * debugTextSize)
             frame = cv2.putText(frame, f'Network : {self.networkFps.fps} fps', (textPosX, textPosY),
                                 cv2.FONT_HERSHEY_SIMPLEX, debugTextSize, NetCam.TEXT_COLOR, thickness,
                                 cv2.LINE_AA)
@@ -340,7 +342,7 @@ class NetCam:
 
     def computeDisplayHeight(self):
         widthMultiplier = 2 if self.isStereoCam else 1
-        self.displayHeight = int(self.displayWidth / (self.imgWidth//widthMultiplier) * self.imgHeight)
+        self.displayHeight = int(self.displayWidth / (self.imgWidth // widthMultiplier) * self.imgHeight)
 
 
 def console(text, indentlevel=0):
