@@ -76,10 +76,10 @@ class NetCam:
             Publish Data to any connected Server
         :param socket:
         """
-        console('Starting network broadcast ( ZMQ Publish) ...',1)
+        console('Starting network broadcast ( ZMQ Publish) ...')
         url_publish = "tcp://*:%s" % NetCam.DEFAULT_CLIENT_PORT
         socket.bind(url_publish)
-        console(f'Publishing video on {url_publish}',2)
+        console(f'Publishing video on {url_publish}',1)
 
         i = 0
         while self.isRunning:

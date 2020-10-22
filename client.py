@@ -5,9 +5,9 @@ from NetCam import *
 if __name__ == '__main__':
     print('Started main.py...')
     netCam = NetCam(display='QVGA')
+    print(netCam.getDetail())
     netCam.startClient()
 
-    print('Camera Info', netCam.getDetail())
 
     while netCam.isRunning:
 
