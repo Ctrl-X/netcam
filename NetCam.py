@@ -177,7 +177,7 @@ class NetCam:
     def stopCapture(self):
         if self.videoStream and self.videoStream.isOpened():
             self.videoStream.release()
-        console('released video stream.', 1)
+            console('released video stream.', 1)
 
     def initVideoStream(self, source):
         """
@@ -279,7 +279,6 @@ class NetCam:
     def clearAll(self):
         console('Stopping NetCam...')
         self.stopCapture()
-        self.isRunning = False
         if self.clients != None:
             self.clients.close()
         if self.workers != None:
@@ -287,6 +286,7 @@ class NetCam:
         zmqContext = zmq.Context.instance()
         zmqContext.term()
         console('Stopping Done.', 1)
+        self.isRunning = False
 
 
 def console(text, indentlevel=0):
