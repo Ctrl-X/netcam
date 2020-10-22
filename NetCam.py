@@ -62,6 +62,7 @@ class NetCam:
         ## Launch the camera capture thread
         console('Init camera capture...', 1)
         self.startCapture()
+        time.sleep(0.1)
 
         ## Launch the networdThread
         console('Init network...', 1)
@@ -70,6 +71,7 @@ class NetCam:
         workerThread = Thread(target=self.clientThreadRunner, args=([socket]))
         self.threadList.append(workerThread)
         workerThread.start()
+        time.sleep(0.1)
 
         ## Launch the display Thread
         if withdisplay:
@@ -77,6 +79,9 @@ class NetCam:
             workerThread = Thread(target=self.displayRunner, args=())
             self.threadList.append(workerThread)
             workerThread.start()
+            time.sleep(0.1)
+
+        console('NetCam Client started !')
 
     def clientThreadRunner(self, socket):
         """
@@ -286,7 +291,6 @@ class NetCam:
             cv2.imshow(NetCam.DEFAULT_WINDOW_NAME, frame)
 
         console('Display thread stopped.', 1)
-
 
     def toggleDebug(self):
         self.displayDebug = not self.displayDebug
