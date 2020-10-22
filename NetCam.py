@@ -303,9 +303,8 @@ class NetCam:
 
         if self.displayDebug:
             self.displayFps.compute()
-            debugTextSize = self.displayWidth / 640 / 2
-            thickness = int(debugTextSize)
-            thickness = thickness if thickness > 1 else 1
+            debugTextSize = self.displayWidth / 1280
+           thickness = 1 if self.displayWidth < 1280 else 2
 
             textPosX, textPosY = NetCam.TEXT_POSITION
             textPosX += int(40 * debugTextSize)
