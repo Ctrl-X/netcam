@@ -33,6 +33,9 @@ if __name__ == '__main__':
                     netCam.toggleFullScreen(False)
                 else:
                     print(f'Key pressed: {key}')
+
+    except KeyboardInterrupt:
+        netCam.clearAll()
     except Exception as err:
         netCam.clearAll()
         raise err
