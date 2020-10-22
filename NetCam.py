@@ -293,13 +293,13 @@ class NetCam:
             return
 
         frame = self.imgBuffer
-        if self.isStereoCam:
-            # the Display is not in stereo, so remove the half of the picture
-            frame = frame[0:self.imgHeight, 0:self.imgWidth // 2]
+        # if self.isStereoCam:
+        #     # the Display is not in stereo, so remove the half of the picture
+        #     frame = frame[0:self.imgHeight, 0:self.imgWidth // 2]
 
-        if self.displayHeight != self.imgHeight:
-            # Resize the picture for display purpose
-            frame = cv2.resize(frame, (self.displayWidth, self.displayHeight))
+        # if self.displayHeight != self.imgHeight:
+        #     # Resize the picture for display purpose
+        #     frame = cv2.resize(frame, (self.displayWidth, self.displayHeight))
 
         if self.displayDebug:
             self.displayFps.compute()
