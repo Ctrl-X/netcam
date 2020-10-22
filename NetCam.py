@@ -27,7 +27,7 @@ class NetCam:
     TEXT_POSITION = (0, 0)
 
     def __init__(self, serverip=DEFAULT_IP, serverport=DEFAULT_SERVER_PORT, capture=DEFAULT_RES, display=None,
-                 isstereocam=True,
+                 isstereocam=False,
                  source='0', fullscreen=False):
 
         self.captureResolution = capture
@@ -52,7 +52,7 @@ class NetCam:
         self.serverIp = serverip
         self.serverPort = serverport
         self.displayDebug = False
-        self.displayStereo = False
+        self.showStereo = False
         self.displayFps = FpsCatcher()
         self.captureFps = FpsCatcher()
         self.networkFps = FpsCatcher()
@@ -274,6 +274,10 @@ class NetCam:
             cv2.resizeWindow(NetCam.DEFAULT_WINDOW_NAME, self.displayWidth, self.displayHeight)
             cv2.setWindowProperty(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_TOPMOST, 0.0)
 
+    def toggleDisplayStereo(self, isShowStereo=None):
+        self.showStereo = isShowStereo if isShowStereo is not None else not self.showStereo
+        console(f'Show Stereo : {self.showStereo}')
+
     def display(self):
 
         if not self.displayResolution:
@@ -296,7 +300,7 @@ class NetCam:
             return
 
         frame = self.imgBuffer
-        if self.isStereoCam:
+        if self.isStereoCam and not self.showStereo:
             # the Display is not in stereo, so remove the half of the picture
             frame = frame[0:self.imgHeight, 0:self.imgWidth // 2]
 
@@ -346,6 +350,8 @@ class NetCam:
                 self.setDisplayResolution('2K')
             elif key == ord('f'):  # F to toggle fullscreen
                 self.toggleFullScreen()
+            elif key == ord('s'):  # S to toggle display stereo
+                self.toggleDisplayStereo()
             elif key == 27:  # Esc key was pressed,
                 self.toggleFullScreen(False)
             else:
