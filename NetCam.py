@@ -60,16 +60,28 @@ class NetCam:
         ## Server Information
         self.threadList = []
 
-    def startClient(self):
-        """
-            Launch the network client ( broadcast the camera signal)
-        """
+        # Start the capture
         console('Starting NetCam Client...')
         self.isRunning = True
         ## Launch the camera capture thread
         console('Init camera capture...', 1)
         self.startCapture()
         time.sleep(0.1)
+
+        ## Launch the display (main thread)
+        if self.displayResolution:
+            console('Init display...', 1)
+            console(f'Display resolution : {self.displayResolution} ({self.displayWidth} x {self.displayHeight})', 2)
+            cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WINDOW_GUI_NORMAL)
+            self.toggleFullScreen(self.fullScreen)
+            time.sleep(0.1)
+            console('Display is now ready.', 2)
+
+
+    def startClient(self):
+        """
+            Launch the network client ( broadcast the camera signal)
+        """
 
         ## Launch the networdThread
         console('Init network...', 1)
@@ -79,16 +91,6 @@ class NetCam:
         self.threadList.append(workerThread)
         workerThread.start()
         time.sleep(0.1)
-
-        ## Launch the display Thread (main thread)
-        if self.displayResolution:
-            console('Init display...', 1)
-            console(f'Display resolution : {self.displayResolution} ({self.displayWidth} x {self.displayHeight})', 2)
-            cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WINDOW_GUI_NORMAL)
-            self.toggleFullScreen(self.fullScreen)
-            time.sleep(0.1)
-            console('Display is now ready.', 2)
-
         console('NetCam Client started !')
 
     def clientThreadRunner(self, socket):
