@@ -213,6 +213,7 @@ class NetCam:
                         cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))  # define the compression to mjpg
         videoStream.set(cv2.CAP_PROP_FORMAT, -1)
         videoStream.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+        console(videoStream.get(cv2.CAP_PROP_RECTIFICATION))
         videoStream.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
 
         return videoStream
