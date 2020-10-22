@@ -35,6 +35,7 @@ class NetCam:
         self.isStereoCam = isstereocam
         self.source = source
         self.imgWidth = resolutionFinder(self.captureResolution, self.isStereoCam)
+        console(self.imgWidth)
         self.imgHeight = None
 
         if self.displayResolution:
