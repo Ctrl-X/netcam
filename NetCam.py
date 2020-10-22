@@ -24,7 +24,7 @@ class NetCam:
     NBR_BUFFER = 3
 
     TEXT_COLOR = (0, 0, 255)
-    TEXT_POSITION = (20, 20)
+    TEXT_POSITION = (0, 0)
 
     def __init__(self, serverip=DEFAULT_IP, serverport=DEFAULT_SERVER_PORT, capture=DEFAULT_RES, display=None,
                  isstereocam=True,
@@ -304,15 +304,17 @@ class NetCam:
             self.displayFps.compute()
             debugTextSize = 0.5 if self.displayWidth < 1280 else 1
             textPosX, textPosY = NetCam.TEXT_POSITION
+            textPosX += int(40 * debugTextSize)
+            textPosY += int(40 * debugTextSize)
             frame = cv2.putText(frame, f'Capture : {self.captureFps.fps} fps ({self.captureResolution})',
                                 (textPosX, textPosY),
                                 cv2.FONT_HERSHEY_SIMPLEX, debugTextSize, NetCam.TEXT_COLOR, 1,
                                 cv2.LINE_AA)
-            textPosY += 40
+            textPosY += int(40*debugTextSize)
             frame = cv2.putText(frame, f'Display : {self.displayFps.fps} fps ({self.displayResolution})',
                                 (textPosX, textPosY), cv2.FONT_HERSHEY_SIMPLEX, debugTextSize, NetCam.TEXT_COLOR, 1,
                                 cv2.LINE_AA)
-            textPosY += 40
+            textPosY += int(40*debugTextSize)
             frame = cv2.putText(frame, f'Network : {self.networkFps.fps} fps', (textPosX, textPosY),
                                 cv2.FONT_HERSHEY_SIMPLEX, debugTextSize, NetCam.TEXT_COLOR, 1,
                                 cv2.LINE_AA)
