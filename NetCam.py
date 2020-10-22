@@ -285,6 +285,7 @@ class NetCam:
             isWindowClosed = cv2.getWindowProperty(NetCam.DEFAULT_WINDOW_NAME, 0)
             if isWindowClosed == -1:
                 # the window has been closed
+                console("Closing window...")
                 self.clearAll()
         except:
             self.clearAll()
