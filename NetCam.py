@@ -309,7 +309,8 @@ class NetCam:
 
         if self.displayHeight != self.imgHeight:
             # Resize the picture for display purpose
-            frame = cv2.resize(frame, (self.displayWidth, self.displayHeight))
+            width = self.displayWidth if not self.showStereo else self.displayWidth *2
+            frame = cv2.resize(frame, (width, self.displayHeight))
 
         if self.displayDebug:
             self.displayFps.compute()
