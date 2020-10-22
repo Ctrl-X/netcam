@@ -230,9 +230,9 @@ class NetCam:
             if n == 2:
                 stream.read(self.imgBuffer)
                 n = 0
+                if self.displayDebug:
+                    self.captureFps.compute()
 
-            if self.displayDebug:
-                self.captureFps.compute()
             time.sleep(0.001)
 
         if self.videoStream and self.videoStream.isOpened():
