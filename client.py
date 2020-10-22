@@ -33,6 +33,9 @@ if __name__ == '__main__':
                     netCam.toggleFullScreen(False)
                 else:
                     print(f'Key pressed: {key}')
-    except:
+    except Exception as inst:
         netCam.clearAll()
+        print(type(inst))  # the exception instance
+        print(inst.args)  # arguments stored in .args
+        print(inst)
     exit()
