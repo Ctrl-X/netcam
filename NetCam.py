@@ -39,6 +39,7 @@ class NetCam:
         self.imgBuffer = [None]
         self.isRunning = False
         self.fullScreen = fullscreen
+        self.videoStream = None
         self.videothread = None
 
         ## Debug informations
@@ -151,7 +152,7 @@ class NetCam:
         """
         console('-- Init camera capture...')
         ## Close any previously opened stream
-        if self.isRunning:
+        if self.isRunning and self.videoStream:
             self.videoStream.release()
 
         ## prepare the triple buffering
