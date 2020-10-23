@@ -173,7 +173,7 @@ class NetCam:
             if self.displayDebug:
                 self.networkFps.compute()
 
-            buffer = self.recv(copy=False)
+            buffer = socket.recv(copy=False)
             shape = [len(buffer.bytes), 1]
 
             buffer = np.frombuffer(buffer, dtype='uint8')
