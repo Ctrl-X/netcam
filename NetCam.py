@@ -68,10 +68,10 @@ class NetCam:
             self.startCapture()
             time.sleep(0.1)
 
-        # Start the jpg conversion
-        if self.captureResolution:
-            self.startConversion()
-            time.sleep(0.1)
+        # # Start the jpg conversion
+        # if self.captureResolution:
+        #     self.startConversion()
+        #     time.sleep(0.1)
 
         ## Launch the display (main thread)
         if self.displayResolution:
@@ -114,8 +114,10 @@ class NetCam:
             # messagedata = time.strftime('%l:%M:%S')
             # bytes = bytearray(messagedata,'utf-8')
             # print(messagedata,bytes)
-            if self.jpgBuffer is not None:
-                socket.send_array(self.jpgBuffer, "YOUPI", copy=False)
+
+            #
+            # if self.jpgBuffer is not None:
+            #     socket.send_array(self.jpgBuffer, "YOUPI", copy=False)
 
 
             # # Method 1
@@ -123,15 +125,15 @@ class NetCam:
             # jpg_as_text = base64.b64encode(buffer)
             # socket.send(jpg_as_text)
 
-            # # Method 2
-            # encoded, buffer = cv2.imencode('.jpg', self.imgBuffer)
-            # if self.imgBuffer.flags['C_CONTIGUOUS']:
-            #     # if image is already contiguous in memory just send it
-            #     socket.send_array(buffer, "YOUPI", copy=False)
-            # else:
-            #     # else make it contiguous before sending
-            #     self.imgBuffer = np.ascontiguousarray(self.imgBuffer)
-            #     socket.send_array(buffer, "YOUPI", copy=False)
+            # Method 2
+            encoded, buffer = cv2.imencode('.jpg', self.imgBuffer)
+            if self.imgBuffer.flags['C_CONTIGUOUS']:
+                # if image is already contiguous in memory just send it
+                socket.send_array(buffer, "YOUPI", copy=False)
+            else:
+                # else make it contiguous before sending
+                self.imgBuffer = np.ascontiguousarray(self.imgBuffer)
+                socket.send_array(buffer, "YOUPI", copy=False)
 
             # socket.send_array(self.imgBuffer, copy=False)
             # i += 1
