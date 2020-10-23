@@ -27,7 +27,7 @@ class NetCam:
     TEXT_COLOR = (0, 0, 255)
     TEXT_POSITION = (0, 0)
 
-    def __init__(self, serverip=DEFAULT_IP, serverport=DEFAULT_SERVER_PORT, capture=DEFAULT_RES, display=None,
+    def __init__(self, serverip=DEFAULT_IP, serverport=DEFAULT_SERVER_PORT, capture=None, display=None,
                  isstereocam=False,
                  source='0', fullscreen=False, consolelog=True):
 
@@ -37,12 +37,7 @@ class NetCam:
         self.isStereoCam = isstereocam
         self.source = source
         self.imgWidth, self.imgHeight = resolutionFinder(self.captureResolution, self.isStereoCam)
-        self.console(self.imgWidth)
-
-        if self.displayResolution:
-            self.displayWidth, self.displayHeight = resolutionFinder(self.displayResolution)
-        else:
-            self.displayWidth: None
+        self.displayWidth, self.displayHeight = resolutionFinder(self.displayResolution)
 
         self.fps = NetCam.MAX_FPS
         self.imgBuffer = [None]
@@ -64,14 +59,17 @@ class NetCam:
         ## Server Information
         self.threadList = []
 
-        # Start the capture
         self.console('Starting NetCam...')
-        self.startCapture()
-        time.sleep(0.1)
+
+        # Start the capture
+        if self.captureResolution:
+            self.startCapture()
+            time.sleep(0.1)
 
         ## Launch the display (main thread)
         if self.displayResolution:
             self.startDisplay()
+            time.sleep(0.1)
 
     def startClient(self):
         """
@@ -105,7 +103,7 @@ class NetCam:
             if self.displayDebug:
                 self.networkFps.compute()
             # socket.send(self.imgBuffer)
-            messagedata = random.randrange(1,215) - 80
+            messagedata = random.randrange(1, 215) - 80
             print("%d %d" % (topic, messagedata))
 
             socket.send_string("%d %d" % (topic, messagedata))
@@ -429,6 +427,8 @@ class NetCam:
 
 
 def resolutionFinder(res, isstereocam=False):
+    if res == None:
+        return (None, None)
     widthMultiplier = 2 if isstereocam else 1
     # switcher = {
     #     'QVGA': 320 ,
