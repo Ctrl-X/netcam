@@ -79,7 +79,7 @@ class NetCam:
         ## Launch the networdThread
         self.console('Init network (client)...', 1)
         zmqContext = zmq.Context()
-        socket = zmqContext.socket(zmq.RADIO)
+        socket = zmqContext.socket(zmq.SUB)
         workerThread = Thread(target=self.clientThreadRunner, args=([socket]))
         self.threadList.append(workerThread)
         workerThread.start()
@@ -106,7 +106,7 @@ class NetCam:
             messagedata = time.strftime('%l:%M:%S')
             print(messagedata)
 
-            socket.send(messagedata, group="cam")
+            socket.send(messagedata)
             # i += 1
             time.sleep(0.001)
         self.console('Network thread stopped.', 1)
@@ -145,7 +145,7 @@ class NetCam:
         url_publisher = f"tcp://192.168.0.70:{NetCam.DEFAULT_CLIENT_PORT}"
 
         # topicfilter = "1234"
-        socket.setsockopt(zmq.SUBSCRIBE, "cam")
+        socket.setsockopt(zmq.SUBSCRIBE, "")
         socket.setsockopt(zmq.CONFLATE, 1)
         socket.connect(url_publisher)
         self.isNetworkRunning = True
