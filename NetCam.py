@@ -78,8 +78,8 @@ class NetCam:
 
         ## Launch the networdThread
         self.console('Init network (client)...', 1)
-        zmqContext = zmq.Context()
-        # zmqContext = SerializingContext()
+        # zmqContext = zmq.Context()
+        zmqContext = SerializingContext()
         socket = zmqContext.socket(zmq.PUB)
         workerThread = Thread(target=self.clientThreadRunner, args=([socket]))
         self.threadList.append(workerThread)
@@ -109,16 +109,16 @@ class NetCam:
             # print(messagedata,bytes)
 
             encoded, buffer = cv2.imencode('.jpg', self.imgBuffer)
-            jpg_as_text = base64.b64encode(buffer)
-            socket.send(jpg_as_text)
+            # jpg_as_text = base64.b64encode(buffer)
+            # socket.send(jpg_as_text)
 
-            # if self.imgBuffer.flags['C_CONTIGUOUS']:
-            #     # if image is already contiguous in memory just send it
-            #     socket.send_array(self.imgBuffer, "YOUPI", copy=False)
-            # else:
-            #     # else make it contiguous before sending
-            #     self.imgBuffer = np.ascontiguousarray(self.imgBuffer)
-            #     socket.send_array(self.imgBuffer, "YOUPI", copy=False)
+            if self.imgBuffer.flags['C_CONTIGUOUS']:
+                # if image is already contiguous in memory just send it
+                socket.send_array(buffer, "YOUPI", copy=False)
+            else:
+                # else make it contiguous before sending
+                self.imgBuffer = np.ascontiguousarray(self.imgBuffer)
+                socket.send_array(buffer, "YOUPI", copy=False)
 
             # socket.send_array(self.imgBuffer, copy=False)
             # i += 1
@@ -132,8 +132,8 @@ class NetCam:
         ## Launch the networdThread
         self.console('Init network (server)...', 1)
 
-        zmqContext = zmq.Context()
-        # zmqContext = SerializingContext()
+        # zmqContext = zmq.Context()
+        zmqContext = SerializingContext()
         socket = zmqContext.socket(zmq.SUB)
         workerThread = Thread(target=self.serverThreadRunner, args=([socket]))
         self.threadList.append(workerThread)
@@ -174,20 +174,21 @@ class NetCam:
             if self.displayDebug:
                 self.networkFps.compute()
 
-            now = currentMilliTime()
-            frame = socket.recv_string()
-            time1 = currentMilliTime()
-            img = base64.b64decode(frame)
-            time2 = currentMilliTime()
-            npimg = np.fromstring(img, dtype=np.uint8)
-            time3 = currentMilliTime()
-            self.imgBuffer = cv2.imdecode(npimg, 1)
-            time4 = currentMilliTime()
-
-            print(f"receive time {time1 - now} - b64decode time : {time2 - time1} - np.fromString time : {time3 - time2} - imdecode time : {time4 - time3}")
+            # now = currentMilliTime()
+            # frame = socket.recv_string()
+            # time1 = currentMilliTime()
+            # img = base64.b64decode(frame)
+            # time2 = currentMilliTime()
+            # npimg = np.fromstring(img, dtype=np.uint8)
+            # time3 = currentMilliTime()
+            # self.imgBuffer = cv2.imdecode(npimg, 1)
+            # time4 = currentMilliTime()
+            #
+            # print(f"receive time {time1 - now} - b64decode time : {time2 - time1} - np.fromString time : {time3 - time2} - imdecode time : {time4 - time3}")
 
             # if self.imgBuffer is None:
-            # msg, self.imgBuffer = socket.recv_array(copy=False)
+            msg, buffer = socket.recv_array(copy=False)
+            self.imgBuffer = cv2.imdecode(buffer, 1)
                 # self.console(f'received : {msg}')
             # else:
             #     msg = socket.recv(copy=False)
