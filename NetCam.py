@@ -91,7 +91,7 @@ class NetCam:
             Publish Data to any connected Server
         :param socket:
         """
-        url_publish = "tcp://*:%s" % NetCam.DEFAULT_CLIENT_PORT
+        url_publish = "udp://*:%s" % NetCam.DEFAULT_CLIENT_PORT
         self.console(f'Client publishing video on {url_publish}', 2)
         socket.bind(url_publish)
         self.isNetworkRunning = True
@@ -151,7 +151,7 @@ class NetCam:
         # zmq.device(zmq.QUEUE, self.clients, self.workers)
 
     def serverThreadRunner(self, socket):
-        url_publisher = f"tcp://192.168.0.70:{NetCam.DEFAULT_CLIENT_PORT}"
+        url_publisher = f"udp://192.168.0.70:{NetCam.DEFAULT_CLIENT_PORT}"
 
         # topicfilter = "1234"
         socket.setsockopt_string(zmq.SUBSCRIBE, np.unicode(''))
