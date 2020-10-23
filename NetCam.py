@@ -161,7 +161,7 @@ class NetCam:
         # zmq.device(zmq.QUEUE, self.clients, self.workers)
 
     def serverThreadRunner(self, socket):
-        url_publisher = f"tcp://192.168.1.246:{NetCam.DEFAULT_CLIENT_PORT}"
+        url_publisher = f"tcp://192.168.1.247:{NetCam.DEFAULT_CLIENT_PORT}"
 
         # topicfilter = "1234"
         socket.setsockopt_string(zmq.SUBSCRIBE, np.unicode(''))
