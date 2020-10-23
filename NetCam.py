@@ -106,7 +106,7 @@ class NetCam:
                 self.networkFps.compute()
             encoded, buffer = cv2.imencode('.jpg', self.imgBuffer)
             socket.send(buffer, copy=False)
-            reply = socket.recv_string()
+            reply = socket.recv()
             self.console(reply)
             # # Method 1
             # jpg_as_text = base64.b64encode(buffer)
