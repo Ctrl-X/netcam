@@ -136,9 +136,9 @@ class NetCam:
         ## Launch the networdThread
         self.console('Init network (server)...', 1)
 
-        zmqContext = zmq.Context()
+        # zmqContext = zmq.Context()
         zmqContext = SerializingContext()
-        # socket = zmqContext.socket(zmq.SUB)
+        socket = zmqContext.socket(zmq.SUB)
         workerThread = Thread(target=self.serverThreadRunner, args=([socket]))
         self.threadList.append(workerThread)
         workerThread.start()
@@ -161,7 +161,7 @@ class NetCam:
         # zmq.device(zmq.QUEUE, self.clients, self.workers)
 
     def serverThreadRunner(self, socket):
-        url_publisher = f"tcp://192.168.0.70:{NetCam.DEFAULT_CLIENT_PORT}"
+        url_publisher = f"tcp://192.168.1.246:{NetCam.DEFAULT_CLIENT_PORT}"
 
         # topicfilter = "1234"
         socket.setsockopt_string(zmq.SUBSCRIBE, np.unicode(''))
