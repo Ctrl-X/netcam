@@ -17,7 +17,7 @@ import numpy as np
 
 class NetCam:
     DEFAULT_IP = '10.10.64.154'
-    DEFAULT_SERVER_PORT = '5554'
+    DEFAULT_SERVER_PORT = '5555'
     DEFAULT_CLIENT_PORT = '5556'
     DEFAULT_WINDOW_NAME = 'Stream'
 

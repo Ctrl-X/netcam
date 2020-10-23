@@ -14,8 +14,8 @@ picam = VideoStream()
 # picam.set(cv2.CAP_PROP_BUFFERSIZE, NetCam.NBR_BUFFER)  # increase camera buffering to 3 for triple buffering
 # picam.set(cv2.CAP_PROP_FPS, NetCam.MAX_FPS)  # try to put the fps to MAX_FPS
 # picam.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))  # define the compression to mjpg
-picam.stream.set(cv2.CAP_PROP_FRAME_WIDTH, 640*2)
-picam.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+picam.stream.stream.set(cv2.CAP_PROP_FRAME_WIDTH, 640*2)
+picam.stream.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 picam.start()
 time.sleep(2.0)  # allow camera sensor to warm up
 while True:  # send images as stream until Ctrl-C
