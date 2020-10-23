@@ -112,6 +112,7 @@ class NetCam:
             waitTime = 1
             if processTime < 33:
                 waitTime = 33 - processTime
+                self.console(waitTime)
             initTime = currentTime
 
 
