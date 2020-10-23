@@ -174,8 +174,12 @@ class NetCam:
             if self.displayDebug:
                 self.networkFps.compute()
 
-            self.jpgBuffer = socket.recv(copy=False)
+            buffer = socket.recv(copy=False)
+            shape = [len(buffer.bytes), 1]
 
+            buffer = np.frombuffer(buffer, dtype='uint8')
+            buffer = buffer.reshape(shape)
+            self.imgBuffer = cv2.imdecode(buffer, 1)
 
             time.sleep(0.001)
         self.console('Network thread stopped.', 1)
