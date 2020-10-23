@@ -112,11 +112,13 @@ class NetCam:
             waitTime = 1
             if processTime < 33:
                 waitTime = 33 - processTime
-                self.console(waitTime)
             initTime = currentTime
 
+            waitTime = waitTime/1000.0
+            self.console(waitTime)
 
-            time.sleep(waitTime/1000.0)
+
+            time.sleep(waitTime)
         self.console('Network thread stopped.', 1)
 
     def startServer(self):
