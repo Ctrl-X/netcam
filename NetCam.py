@@ -29,7 +29,7 @@ class NetCam:
 
     def __init__(self, serverip=DEFAULT_IP, serverport=DEFAULT_SERVER_PORT, capture=None, display=None,
                  isstereocam=False,
-                 source='0', fullscreen=False, consolelog=True):
+                 source='0', fullscreen=False, consolelog=True, flipvertical=False):
 
         self.consoleLog = consolelog
         self.captureResolution = capture
@@ -41,6 +41,7 @@ class NetCam:
 
         self.fps = NetCam.MAX_FPS
         self.imgBuffer = None
+        self.flipVertical = flipvertical
         self.isCaptureRunning = False
         self.isDisplayRunning = False
         self.isNetworkRunning = False
@@ -379,6 +380,9 @@ class NetCam:
             frame = cv2.resize(frame, (width, self.displayHeight))
         else:
             frame = np.copy(frame)
+
+        if self.flipVertical:
+            frame = cv2.flip(frame,0)
 
         if self.displayDebug:
             self.displayFps.compute()
