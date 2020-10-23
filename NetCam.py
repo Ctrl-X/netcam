@@ -163,10 +163,10 @@ class NetCam:
         # self.console(f'Connected To {url_publisher}')
         # self.console('self.isNetworkRunning', self.isNetworkRunning)
         while self.isNetworkRunning:
-            rpi_name, image = image_hub.recv_image()
+            rpi_name, self.imgBuffer = image_hub.recv_image()
             # result = socket.recv()
             # topic, messagedata = result.split()
-            cv2.imshow(rpi_name, image) # 1 window for each RPi
+            # cv2.imshow(rpi_name, image) # 1 window for each RPi
             # self.console(f'received : {result}')
             cv2.waitKey(1)
             image_hub.send_reply(b'OK')
@@ -427,7 +427,9 @@ class NetCam:
 
     def computeDisplayHeight(self):
         widthMultiplier = 2 if self.isStereoCam else 1
-        self.displayHeight = int(self.displayWidth / (self.imgWidth // widthMultiplier) * self.imgHeight)
+        if self.captureResolution:
+            self.displayHeight = int(self.displayWidth / (self.imgWidth // widthMultiplier) * self.imgHeight)
+
 
     def isRunning(self):
         return self.isCaptureRunning or self.isDisplayRunning or self.isNetworkRunning
