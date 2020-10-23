@@ -79,7 +79,7 @@ class NetCam:
         ## Launch the networdThread
         self.console('Init network (client)...', 1)
         zmqContext = zmq.Context()
-        socket = zmqContext.socket(zmq.PUB)
+        socket = zmqContext.socket(zmq.RADIO)
         workerThread = Thread(target=self.clientThreadRunner, args=([socket]))
         self.threadList.append(workerThread)
         workerThread.start()
@@ -98,15 +98,15 @@ class NetCam:
         self.console('Network thread is now running ( ZMQ Publish )...', 2)
 
         # i = 0
-        topic = 1234
+        # topic = 1234
         while self.isNetworkRunning:
             if self.displayDebug:
                 self.networkFps.compute()
             # socket.send(self.imgBuffer)
             messagedata = time.strftime('%l:%M:%S')
-            print("%d %s" % (topic, messagedata))
+            print(messagedata)
 
-            socket.send_string("%s" % messagedata)
+            socket.send(messagedata, group="cam")
             # i += 1
             time.sleep(0.001)
         self.console('Network thread stopped.', 1)
@@ -119,7 +119,7 @@ class NetCam:
         self.console('Init network (server)...', 1)
 
         zmqContext = zmq.Context()
-        socket = zmqContext.socket(zmq.SUB)
+        socket = zmqContext.socket(zmq.DISH)
         workerThread = Thread(target=self.serverThreadRunner, args=([socket]))
         self.threadList.append(workerThread)
         workerThread.start()
@@ -144,8 +144,8 @@ class NetCam:
     def serverThreadRunner(self, socket):
         url_publisher = f"tcp://192.168.0.70:{NetCam.DEFAULT_CLIENT_PORT}"
 
-        topicfilter = "1234"
-        socket.setsockopt_string(zmq.SUBSCRIBE, topicfilter)
+        # topicfilter = "1234"
+        socket.setsockopt(zmq.SUBSCRIBE, "cam")
         socket.setsockopt(zmq.CONFLATE, 1)
         socket.connect(url_publisher)
         self.isNetworkRunning = True
@@ -156,9 +156,9 @@ class NetCam:
         self.console(f'Connected To {url_publisher}')
         self.console('self.isNetworkRunning', self.isNetworkRunning)
         while self.isNetworkRunning:
-            result = socket.recv_string()
-            topic, messagedata = result.split()
-            self.console(f'received : {messagedata}')
+            result = socket.recv()
+            # topic, messagedata = result.split()
+            self.console(f'received : {result}')
             time.sleep(000.1)
         self.console('Network thread stopped.', 1)
 
