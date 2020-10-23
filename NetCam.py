@@ -110,7 +110,7 @@ class NetCam:
             socket.send(buffer, copy=False)
             processTime = currentTime - initTime
             waitTime = 1
-            if processTime < 33:
+            if processTime > 0 and processTime < 33:
                 waitTime = 33 - processTime
             initTime = currentTime
 
