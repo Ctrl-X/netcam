@@ -104,9 +104,9 @@ class NetCam:
                 self.networkFps.compute()
             # socket.send(self.imgBuffer)
             messagedata = time.strftime('%l:%M:%S')
-            print(bytes(messagedata, 'utf-8'))
+            print(messagedata)
 
-            socket.send(messagedata)
+            socket.send(bytes(messagedata, 'utf-8'))
             # i += 1
             time.sleep(0.001)
         self.console('Network thread stopped.', 1)
