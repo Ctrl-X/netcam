@@ -313,9 +313,9 @@ class NetCam:
         self.threadList.append(workerThread)
         workerThread.start()
         time.sleep(0.1)
-        self.console('JPG Compression enabled !')
 
-    def jpgThreadRunner(self, stream):
+    def jpgThreadRunner(self):
+        self.console('JPG Compression enabled !')
         while self.isCaptureRunning:
             if self.imgBuffer is not None:
                 self.jpgBuffer = cv2.imencode('.jpg', self.imgBuffer)
