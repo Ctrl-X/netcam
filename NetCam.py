@@ -108,8 +108,8 @@ class NetCam:
             # bytes = bytearray(messagedata,'utf-8')
             # print(messagedata,bytes)
 
-            encoded, buffer = cv2.imencode('.jpg', self.imgBuffer)
-            jpg_as_text = base64.b64encode(buffer)
+            # encoded, buffer = cv2.imencode('.jpg', self.imgBuffer)
+            jpg_as_text = base64.b64encode(self.imgBuffer)
             socket.send(jpg_as_text)
 
             # if self.imgBuffer.flags['C_CONTIGUOUS']:
