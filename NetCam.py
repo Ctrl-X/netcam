@@ -44,7 +44,9 @@ class NetCam:
 
         self.fps = NetCam.MAX_FPS
         self.imgBuffer = [None]
-        self.isRunning = False
+        self.isCaptureRunning = False
+        self.isDisplayRunning = False
+        self.isNetworkRunning = False
         self.fullScreen = fullscreen
         self.videoStream = None
 
@@ -62,7 +64,7 @@ class NetCam:
 
         # Start the capture
         console('Starting NetCam Client...')
-        self.isRunning = True
+        self.isCaptureRunning = True
         ## Launch the camera capture thread
         console('Init camera capture...', 1)
         self.startCapture()
@@ -70,12 +72,7 @@ class NetCam:
 
         ## Launch the display (main thread)
         if self.displayResolution:
-            console('Init display...', 1)
-            console(f'Display resolution : {self.displayResolution} ({self.displayWidth} x {self.displayHeight})', 2)
-            cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WINDOW_GUI_NORMAL)
-            self.toggleFullScreen(self.fullScreen)
-            time.sleep(0.1)
-            console('Display is now ready.', 2)
+            self.startDisplay()
 
 
     def startClient(self):
@@ -104,11 +101,11 @@ class NetCam:
         console('Network thread is now running ( ZMQ Publish)...', 2)
 
         i = 0
-        while self.isRunning:
+        while self.isCaptureRunning:
             if self.displayDebug:
                 self.networkFps.compute()
-            socket.send(self.imgBuffer)
-            # socket.send_string(f'{i}')
+            # socket.send(self.imgBuffer)
+            socket.send_string(f'{i}')
             time.sleep(0.001)
         console('Network thread stopped.', 1)
 
@@ -116,7 +113,7 @@ class NetCam:
         """
              Launch the network client ( broadcast the camera signal)
         """
-        self.isRunning = True
+        self.isCaptureRunning = True
 
         ## Launch the networdThread
         zmqContext = zmq.Context()
@@ -134,7 +131,7 @@ class NetCam:
         #
         # # Launch pool of worker threads
         # url_worker = "inproc://workers"
-        # self.isRunning = True
+        # self.isCaptureRunning = True
         # for i in range(5):
         #     workerThread = Thread(target=self.connectionListener, args=(url_worker,zmqContext))
         #     self.threadList.append(workerThread)
@@ -147,8 +144,8 @@ class NetCam:
         socket.connect(url_publisher)
 
         console(f'Connected To {url_publisher}')
-        console('self.isRunning', self.isRunning)
-        while self.isRunning:
+        console('self.isCaptureRunning', self.isCaptureRunning)
+        while self.isCaptureRunning:
             result = socket.recv_string()
             console('received', result)
             time.sleep(000.1)
@@ -162,7 +159,7 @@ class NetCam:
     #     socket = zmqContext.socket(zmq.REP)
     #     socket.connect(workerUrl)
     #
-    #     while self.isRunning:
+    #     while self.isCaptureRunning:
     #         if self.displayDebug:
     #             self.captureFps.compute()
     #         self.imgBuffer = socket.recv_string()
@@ -175,7 +172,7 @@ class NetCam:
             Start capturing video frame and put them in the imgBuffer
         """
         ## Close any previously opened stream
-        if self.isRunning and self.videoStream:
+        if self.isCaptureRunning and self.videoStream:
             self.videoStream.release()
 
         ## prepare the triple buffering
@@ -203,8 +200,8 @@ class NetCam:
         """
 
         videoStream = cv2.VideoCapture(0 if source == '0' else source, cv2.CAP_V4L2)
-        self.isRunning = videoStream.isOpened()
-        assert self.isRunning, 'Unable to open camera %s . Is your camera connected (look for videoX in /dev/ ? ' % source
+        self.isCaptureRunning = videoStream.isOpened()
+        assert self.isCaptureRunning, 'Unable to open camera %s . Is your camera connected (look for videoX in /dev/ ? ' % source
 
         ## Get the requested resolution
         width, height = resolutionFinder(self.captureResolution, self.isStereoCam)
@@ -227,7 +224,7 @@ class NetCam:
         """
         console('Capture thread is now running.', 2)
         n = 0
-        while self.isRunning and stream.isOpened():
+        while self.isCaptureRunning and stream.isOpened():
             n += 1
             #stream.grab()
             if n == 2:
@@ -255,8 +252,17 @@ class NetCam:
             'width': self.imgWidth,
             'height': self.imgHeight,
             'maxFps': self.fps,
-            'isRunning': self.isRunning,
+            'isCaptureRunning': self.isCaptureRunning,
         })
+
+    def startDisplay(self):
+        console('Init display...', 1)
+        console(f'Display resolution : {self.displayResolution} ({self.displayWidth} x {self.displayHeight})', 2)
+        cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WINDOW_GUI_NORMAL)
+        self.toggleFullScreen(self.fullScreen)
+        self.isDisplayRunning = True
+        time.sleep(0.1)
+        console('Display is now ready.', 2)
 
     def setDisplayResolution(self, resolution):
         if (resolution != None):
@@ -290,7 +296,7 @@ class NetCam:
             console('You need to setup the display Resolution in NetCam constructor. ex : NetCam(display=\'VGA\'')
             time(1)
             return
-        if not self.isRunning:
+        if not self.isDisplayRunning:
             cv2.destroyAllWindows()
             return
         try:
@@ -370,14 +376,18 @@ class NetCam:
         self.captureFps.initTime()
 
     def clearAll(self):
-        if self.isRunning:
-            console('Stopping NetCam...')
-            self.isRunning = False
-            self.threadList = []
-            zmqContext = zmq.Context.instance()
-            zmqContext.term()
-            time.sleep(1)
-            console('Stopping Done.', 1)
+        if self.isCaptureRunning:
+            console('Stopping Capture...')
+            self.isCaptureRunning = False
+        if self.isDisplayRunning:
+            console('Stopping Display...')
+            self.isDisplayRunning = False
+
+        self.threadList = []
+        zmqContext = zmq.Context.instance()
+        zmqContext.term()
+        time.sleep(1)
+        console('Stopping Done.', 1)
 
     def computeDisplayHeight(self):
         widthMultiplier = 2 if self.isStereoCam else 1
