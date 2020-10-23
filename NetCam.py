@@ -107,7 +107,7 @@ class NetCam:
             bytes = bytearray(messagedata,'utf-8')
             print(messagedata,bytes)
 
-            socket.send(bytes)
+            # socket.send_multipart(bytes)
             # i += 1
             time.sleep(0.001)
         self.console('Network thread stopped.', 1)
