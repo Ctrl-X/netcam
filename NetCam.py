@@ -318,7 +318,7 @@ class NetCam:
         self.console('JPG Compression enabled !')
         while self.isCaptureRunning:
             if self.imgBuffer is not None:
-                self.jpgBuffer = cv2.imencode('.jpg', self.imgBuffer)
+                encoded, self.jpgBuffer = cv2.imencode('.jpg', self.imgBuffer)
             time.sleep(0.001)
 
     def getDetail(self):
