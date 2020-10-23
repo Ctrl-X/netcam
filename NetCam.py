@@ -106,7 +106,7 @@ class NetCam:
             messagedata = time.strftime('%l:%M:%S')
             print("%d %s" % (topic, messagedata))
 
-            socket.send_string("%d %d" % (topic, messagedata))
+            socket.send_string("%d %s" % (topic, messagedata))
             # i += 1
             time.sleep(0.001)
         self.console('Network thread stopped.', 1)
