@@ -5,7 +5,7 @@ from NetCam import *
 if __name__ == '__main__':
     print('Started main.py...')
     netCam = NetCam(display='VGA', capture='VGA',isstereocam=True)
-    netCam.startClient()
+    #netCam.startClient()
 
     try:
         while netCam.isRunning:
