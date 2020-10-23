@@ -41,7 +41,6 @@ class NetCam:
 
         self.fps = NetCam.MAX_FPS
         self.imgBuffer = None
-        self.jpgBuffer = None
         self.flipVertical = flipvertical
         self.isCaptureRunning = False
         self.isDisplayRunning = False
@@ -68,10 +67,7 @@ class NetCam:
             self.startCapture()
             time.sleep(0.1)
 
-        # # Start the jpg conversion
-        # if self.captureResolution:
-        #     self.startConversion()
-        #     time.sleep(0.1)
+
 
         ## Launch the display (main thread)
         if self.displayResolution:
@@ -115,18 +111,13 @@ class NetCam:
             # bytes = bytearray(messagedata,'utf-8')
             # print(messagedata,bytes)
 
-            #
-            # if self.jpgBuffer is not None:
-            #     socket.send_array(self.jpgBuffer, "YOUPI", copy=False)
-
+            encoded, buffer = cv2.imencode('.jpg', self.imgBuffer)
 
             # # Method 1
-            # encoded, buffer = cv2.imencode('.jpg', self.imgBuffer)
             # jpg_as_text = base64.b64encode(buffer)
             # socket.send(jpg_as_text)
 
             # Method 2
-            encoded, buffer = cv2.imencode('.jpg', self.imgBuffer)
             if self.imgBuffer.flags['C_CONTIGUOUS']:
                 # if image is already contiguous in memory just send it
                 socket.send_array(buffer, "YOUPI", copy=False)
@@ -134,6 +125,7 @@ class NetCam:
                 # else make it contiguous before sending
                 self.imgBuffer = np.ascontiguousarray(self.imgBuffer)
                 socket.send_array(buffer, "YOUPI", copy=False)
+
 
             # socket.send_array(self.imgBuffer, copy=False)
             # i += 1
@@ -204,6 +196,7 @@ class NetCam:
             # Method 2
             msg, buffer = socket.recv_array(copy=False)
             self.imgBuffer = cv2.imdecode(buffer, 1)
+
 
             time.sleep(0.001)
         self.console('Network thread stopped.', 1)
@@ -305,24 +298,6 @@ class NetCam:
         self.videoStream = None
         self.console('Capture thread stopped.', 1)
 
-    def startConversion(self):
-        """
-            Launch the conversion thread ( transform a raw image to jpg)
-        """
-        ## Launch the jpgThread
-        self.console('Init JPG Compression...', 1)
-        workerThread = Thread(target=self.jpgThreadRunner)
-        self.threadList.append(workerThread)
-        workerThread.start()
-        time.sleep(0.1)
-
-    def jpgThreadRunner(self):
-        self.console('JPG Compression enabled !')
-        while self.isCaptureRunning:
-            if self.imgBuffer is not None:
-                encoded, self.jpgBuffer = cv2.imencode('.jpg', self.imgBuffer)
-            time.sleep(0.001)
-
     def getDetail(self):
         return ({
             'serverIp': self.serverIp,
@@ -409,7 +384,7 @@ class NetCam:
             frame = np.copy(frame)
 
         if self.flipVertical:
-            frame = cv2.flip(frame, 0)
+            frame = cv2.flip(frame,0)
 
         if self.displayDebug:
             self.displayFps.compute()
@@ -598,18 +573,18 @@ class SerializingSocket(zmq.Socket):
         """
 
         # md = self.recv_json(flags=flags)
-        currentMilliTime = lambda: int(round(time.time() * 1000))
-        now = currentMilliTime()
+        # currentMilliTime = lambda: int(round(time.time() * 1000))
+        # now = currentMilliTime()
         msg = self.recv(flags=flags, copy=copy, track=track)
         md = dict(
             msg="YOUPI",
             dtype='uint8',
-            shape=[len(msg.bytes), 1],
+            shape=[len(msg.bytes),1],
         )
-        time1 = currentMilliTime()
+        # time1 = currentMilliTime()
         A = np.frombuffer(msg, dtype=md['dtype'])
-        time2 = currentMilliTime()
-        print(f"receive time {time1 - now} - parsing time : {time2 - time1}")
+        # time2 = currentMilliTime()
+        # print(f"receive time {time1-now} - parsing time : {time2-time1}")
         return (md['msg'], A.reshape(md['shape']))
 
     def recv_jpg(self, flags=0, copy=True, track=False):
