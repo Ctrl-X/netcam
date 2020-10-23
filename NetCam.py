@@ -93,10 +93,10 @@ class NetCam:
         :param socket:
         """
         url_publish = "tcp://*:%s" % NetCam.DEFAULT_CLIENT_PORT
-        console(f'Publishing video on {url_publish}', 2)
+        console(f'Client publishing video on {url_publish}', 2)
         socket.bind(url_publish)
         self.isNetworkRunning = True
-        console('Network thread is now running ( ZMQ Publish)...', 2)
+        console('Network thread is now running ( ZMQ Publish )...', 2)
 
         i = 0
         while self.isNetworkRunning:
@@ -276,8 +276,8 @@ class NetCam:
 
     def toggleFullScreen(self, isFullScreen=None):
         self.fullScreen = isFullScreen if isFullScreen is not None else not self.fullScreen
-        console(f'Toggle fullscreen : {self.fullScreen}')
         if self.fullScreen:
+            console(f'Toggle fullscreen')
             cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_FULLSCREEN)
             cv2.setWindowProperty(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
             cv2.setWindowProperty(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_TOPMOST, 1.0)
