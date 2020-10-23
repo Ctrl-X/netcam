@@ -173,6 +173,12 @@ class NetCam:
             if self.displayDebug:
                 self.networkFps.compute()
 
+            buffer = self.recv(copy=False)
+            shape = [len(buffer.bytes), 1]
+
+            buffer = np.frombuffer(buffer, dtype='uint8')
+            buffer = buffer.reshape(shape)
+
             # # Method 1
             # # now = currentMilliTime()
             # frame = socket.recv_string()
@@ -186,7 +192,7 @@ class NetCam:
             # # print(f"receive time {time1 - now} - b64decode time : {time2 - time1} - np.fromString time : {time3 - time2} - imdecode time : {time4 - time3}")
 
             # Method 2
-            msg, buffer = socket.recv_array(copy=False)
+            # msg, buffer = socket.recv_array(copy=False)
             self.imgBuffer = cv2.imdecode(buffer, 1)
 
             time.sleep(0.001)
