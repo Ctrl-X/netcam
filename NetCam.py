@@ -91,7 +91,7 @@ class NetCam:
             Publish Data to any connected Server
         :param socket:
         """
-        url_publish = "udp://*:%s" % NetCam.DEFAULT_CLIENT_PORT
+        url_publish = "tcp://*:%s" % NetCam.DEFAULT_CLIENT_PORT
         self.console(f'Client publishing video on {url_publish}', 2)
         socket.bind(url_publish)
         self.isNetworkRunning = True
