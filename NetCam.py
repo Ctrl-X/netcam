@@ -41,6 +41,7 @@ class NetCam:
 
         self.fps = NetCam.MAX_FPS
         self.imgBuffer = None
+        self.jpgBuffer = None
         self.flipVertical = False
         self.isCaptureRunning = False
         self.isDisplayRunning = False
@@ -104,8 +105,8 @@ class NetCam:
         while self.isNetworkRunning:
             if self.displayDebug:
                 self.networkFps.compute()
-            encoded, buffer = cv2.imencode('.jpg', self.imgBuffer)
-            socket.send(buffer, copy=False)
+            # encoded, buffer = cv2.imencode('.jpg', self.imgBuffer)
+            socket.send(self.jpgBuffer, copy=False)
             # # Method 1
             # jpg_as_text = base64.b64encode(buffer)
             # socket.send(jpg_as_text)
@@ -178,21 +179,6 @@ class NetCam:
 
             buffer = np.frombuffer(buffer, dtype='uint8')
             buffer = buffer.reshape(shape)
-
-            # # Method 1
-            # # now = currentMilliTime()
-            # frame = socket.recv_string()
-            # # time1 = currentMilliTime()
-            # img = base64.b64decode(frame)
-            # # time2 = currentMilliTime()
-            # npimg = np.fromstring(img, dtype=np.uint8)
-            # # time3 = currentMilliTime()
-            # self.imgBuffer = cv2.imdecode(npimg, 1)
-            # # time4 = currentMilliTime()
-            # # print(f"receive time {time1 - now} - b64decode time : {time2 - time1} - np.fromString time : {time3 - time2} - imdecode time : {time4 - time3}")
-
-            # Method 2
-            # msg, buffer = socket.recv_array(copy=False)
             self.imgBuffer = cv2.imdecode(buffer, 1)
 
             time.sleep(0.001)
@@ -240,6 +226,7 @@ class NetCam:
 
         ## Guarantee the first frame
         self.videoStream.read(self.imgBuffer)
+        _, self.jpgBuffer = cv2.imencode('.jpg', self.imgBuffer)
 
         ## Launch the capture thread
         videoThread = Thread(target=self.captureThreadRunner, args=([self.videoStream]), daemon=True)
@@ -282,6 +269,7 @@ class NetCam:
             # stream.grab()
             if n == 2:
                 stream.read(self.imgBuffer)
+                _, self.jpgBuffer = cv2.imencode('.jpg', self.imgBuffer)
                 n = 0
                 if self.displayDebug:
                     self.captureFps.compute()
