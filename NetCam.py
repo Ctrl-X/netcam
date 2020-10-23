@@ -10,7 +10,7 @@ import time
 from threading import Thread
 import zmq
 import cv2
-import random
+import base64
 import numpy as np
 
 
@@ -78,7 +78,8 @@ class NetCam:
 
         ## Launch the networdThread
         self.console('Init network (client)...', 1)
-        zmqContext = SerializingContext()
+        zmqContext = zmq.Context()
+        # zmqContext = SerializingContext()
         socket = zmqContext.socket(zmq.PUB)
         workerThread = Thread(target=self.clientThreadRunner, args=([socket]))
         self.threadList.append(workerThread)
@@ -107,13 +108,17 @@ class NetCam:
             # bytes = bytearray(messagedata,'utf-8')
             # print(messagedata,bytes)
 
-            if self.imgBuffer.flags['C_CONTIGUOUS']:
-                # if image is already contiguous in memory just send it
-                socket.send_array(self.imgBuffer, "YOUPI", copy=False)
-            else:
-                # else make it contiguous before sending
-                self.imgBuffer = np.ascontiguousarray(self.imgBuffer)
-                socket.send_array(self.imgBuffer, "YOUPI", copy=False)
+            encoded, buffer = cv2.imencode('.jpg', self.imgBuffer)
+            jpg_as_text = base64.b64encode(buffer)
+            socket.send(jpg_as_text)
+
+            # if self.imgBuffer.flags['C_CONTIGUOUS']:
+            #     # if image is already contiguous in memory just send it
+            #     socket.send_array(self.imgBuffer, "YOUPI", copy=False)
+            # else:
+            #     # else make it contiguous before sending
+            #     self.imgBuffer = np.ascontiguousarray(self.imgBuffer)
+            #     socket.send_array(self.imgBuffer, "YOUPI", copy=False)
 
             # socket.send_array(self.imgBuffer, copy=False)
             # i += 1
@@ -127,7 +132,8 @@ class NetCam:
         ## Launch the networdThread
         self.console('Init network (server)...', 1)
 
-        zmqContext = SerializingContext()
+        zmqContext = zmq.Context()
+        # zmqContext = SerializingContext()
         socket = zmqContext.socket(zmq.SUB)
         workerThread = Thread(target=self.serverThreadRunner, args=([socket]))
         self.threadList.append(workerThread)
@@ -160,16 +166,33 @@ class NetCam:
         self.isNetworkRunning = True
 
         # socket.setsockopt(zmq.SUBSCRIBE, topicfilter)
+        currentMilliTime = lambda: int(round(time.time() * 1000))
 
         self.console(f'Connected To {url_publisher}')
         self.console('self.isNetworkRunning', self.isNetworkRunning)
         while self.isNetworkRunning:
             if self.displayDebug:
                 self.networkFps.compute()
-            msg, self.imgBuffer = socket.recv_array(copy=False)
+
+            now = currentMilliTime()
+            frame = socket.recv_string()
+            time1 = currentMilliTime()
+            img = base64.b64decode(frame)
+            time2 = currentMilliTime()
+            npimg = np.fromstring(img, dtype=np.uint8)
+            time3 = currentMilliTime()
+            self.imgBuffer = cv2.imdecode(npimg, 1)
+            time4 = currentMilliTime()
+
+            print(f"receive time {time1 - now} - b64decode time : {time2 - time1} - np.fromString time : {time3 - time2} - imdecode time : {time4 - time3}")
+
+            # if self.imgBuffer is None:
+            # msg, self.imgBuffer = socket.recv_array(copy=False)
+                # self.console(f'received : {msg}')
+            # else:
+            #     msg = socket.recv(copy=False)
             # topic, messagedata = result.split()
-            self.console(f'received : {msg}')
-            time.sleep(000.1)
+            time.sleep(0.001)
         self.console('Network thread stopped.', 1)
 
     # def connectionListener2(self, workerUrl, zmqContext = None):
@@ -546,8 +569,13 @@ class SerializingSocket(zmq.Socket):
             dtype='uint8',
             shape=[480,1280,3],
         )
+        currentMilliTime = lambda: int(round(time.time() * 1000))
+        now = currentMilliTime()
         msg = self.recv(flags=flags, copy=copy, track=track)
+        time1 = currentMilliTime()
         A = np.frombuffer(msg, dtype=md['dtype'])
+        time2 = currentMilliTime()
+        print(f"receive time {time1-now} - parsing time : {time2-time1}")
         return (md['msg'], A.reshape(md['shape']))
 
     def recv_jpg(self, flags=0, copy=True, track=False):
