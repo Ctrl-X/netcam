@@ -98,15 +98,14 @@ class NetCam:
         self.console('Network thread is now running ( ZMQ Publish )...', 2)
 
         # i = 0
-        topic = 1234
+        # topic = 1234
         while self.isNetworkRunning:
             if self.displayDebug:
                 self.networkFps.compute()
             # socket.send(self.imgBuffer)
             messagedata = time.strftime('%l:%M:%S')
-            print("%d %s" % (topic, messagedata))
-
-            socket.send_string("%d %s" % (topic, messagedata))
+            print(messagedata)
+            socket.send_string(messagedata)
             # i += 1
             time.sleep(0.001)
         self.console('Network thread stopped.', 1)
@@ -144,21 +143,20 @@ class NetCam:
     def serverThreadRunner(self, socket):
         url_publisher = f"tcp://192.168.0.70:{NetCam.DEFAULT_CLIENT_PORT}"
 
-        topicfilter = "1234"
-        socket.setsockopt_string(zmq.SUBSCRIBE, topicfilter)
+        # topicfilter = "1234"
+        # socket.setsockopt_string(zmq.SUBSCRIBE, topicfilter)
         socket.setsockopt(zmq.CONFLATE, 1)
         socket.connect(url_publisher)
         self.isNetworkRunning = True
 
         # socket.setsockopt(zmq.SUBSCRIBE, topicfilter)
 
-
         self.console(f'Connected To {url_publisher}')
         self.console('self.isNetworkRunning', self.isNetworkRunning)
         while self.isNetworkRunning:
             result = socket.recv_string()
-            topic, messagedata = result.split()
-            self.console(f'received : {messagedata}')
+            # topic, messagedata = result.split()
+            self.console(f'received : {result}')
             time.sleep(000.1)
         self.console('Network thread stopped.', 1)
 
