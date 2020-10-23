@@ -103,11 +103,11 @@ class NetCam:
             if self.displayDebug:
                 self.networkFps.compute()
             # socket.send(self.imgBuffer)
-            messagedata = time.strftime('%l:%M:%S')
-            bytes = bytearray(messagedata,'utf-8')
-            print(messagedata,bytes)
+            # messagedata = time.strftime('%l:%M:%S')
+            # bytes = bytearray(messagedata,'utf-8')
+            # print(messagedata,bytes)
 
-            socket.send_multipart(bytes)
+            socket.send(self.imgBuffer, copy=False)
             # i += 1
             time.sleep(0.001)
         self.console('Network thread stopped.', 1)
@@ -146,7 +146,7 @@ class NetCam:
         url_publisher = f"tcp://192.168.0.70:{NetCam.DEFAULT_CLIENT_PORT}"
 
         # topicfilter = "1234"
-        socket.setsockopt(zmq.SUBSCRIBE, "")
+        socket.setsockopt_string(zmq.SUBSCRIBE, np.unicode(''))
         socket.setsockopt(zmq.CONFLATE, 1)
         socket.connect(url_publisher)
         self.isNetworkRunning = True
