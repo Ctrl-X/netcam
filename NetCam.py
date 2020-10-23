@@ -8,8 +8,7 @@
 
 import time
 from threading import Thread
-import socket
-import imagezmq
+import zmq
 import cv2
 import random
 import numpy as np
@@ -41,7 +40,7 @@ class NetCam:
         self.displayWidth, self.displayHeight = resolutionFinder(self.displayResolution)
 
         self.fps = NetCam.MAX_FPS
-        self.imgBuffer = np.empty(shape=(self.displayHeight, self.displayWidth, 3), dtype=np.uint8)
+        self.imgBuffer = [None]
         self.isCaptureRunning = False
         self.isDisplayRunning = False
         self.isNetworkRunning = False
@@ -79,28 +78,24 @@ class NetCam:
 
         ## Launch the networdThread
         self.console('Init network (client)...', 1)
-
-        # zmqContext = zmq.Context()
-        # socket = zmqContext.socket(zmq.SUB)
-        workerThread = Thread(target=self.clientThreadRunner)
+        zmqContext = zmq.Context()
+        socket = zmqContext.socket(zmq.PUB)
+        workerThread = Thread(target=self.clientThreadRunner, args=([socket]))
         self.threadList.append(workerThread)
         workerThread.start()
         time.sleep(0.1)
         self.console('NetCam Client started !')
 
-    def clientThreadRunner(self):
+    def clientThreadRunner(self, socket):
         """
             Publish Data to any connected Server
         :param socket:
         """
-
-        url_publish = "tcp://192.168.0.56:%s" % NetCam.DEFAULT_SERVER_PORT
-        sender = imagezmq.ImageSender(connect_to=url_publish)
-        rpi_name = socket.gethostname()
-        self.console(f'Client {rpi_name} publishing video on {url_publish}', 2)
-        # socket.bind(url_publish)
+        url_publish = "tcp://*:%s" % NetCam.DEFAULT_CLIENT_PORT
+        self.console(f'Client publishing video on {url_publish}', 2)
+        socket.bind(url_publish)
         self.isNetworkRunning = True
-        # self.console('Network thread is now running ( ZMQ Publish )...', 2)
+        self.console('Network thread is now running ( ZMQ Publish )...', 2)
 
         # i = 0
         # topic = 1234
@@ -111,8 +106,16 @@ class NetCam:
             # messagedata = time.strftime('%l:%M:%S')
             # bytes = bytearray(messagedata,'utf-8')
             # print(messagedata,bytes)
-            sender.send_image(rpi_name, self.imgBuffer)
-            # socket.send(self.imgBuffer, copy=False)
+
+            if self.imgBuffer.flags['C_CONTIGUOUS']:
+                # if image is already contiguous in memory just send it
+                socket.send_array(self.imgBuffer, "YOUPI", copy=False)
+            else:
+                # else make it contiguous before sending
+                self.imgBuffer = np.ascontiguousarray(self.imgBuffer)
+                socket.send_array(self.imgBuffer, "YOUPI", copy=False)
+
+            # socket.send_array(self.imgBuffer, copy=False)
             # i += 1
             time.sleep(0.001)
         self.console('Network thread stopped.', 1)
@@ -124,9 +127,9 @@ class NetCam:
         ## Launch the networdThread
         self.console('Init network (server)...', 1)
 
-        # zmqContext = zmq.Context()
-        # socket = zmqContext.socket(zmq.DISH)
-        workerThread = Thread(target=self.serverThreadRunner)
+        zmqContext = zmq.Context()
+        socket = zmqContext.socket(zmq.SUB)
+        workerThread = Thread(target=self.serverThreadRunner, args=([socket]))
         self.threadList.append(workerThread)
         workerThread.start()
         time.sleep(0.1)
@@ -147,32 +150,27 @@ class NetCam:
         #
         # zmq.device(zmq.QUEUE, self.clients, self.workers)
 
-    def serverThreadRunner(self):
-        url_publisher = f"tcp://*:{NetCam.DEFAULT_SERVER_PORT}"
+    def serverThreadRunner(self, socket):
+        url_publisher = f"tcp://192.168.0.70:{NetCam.DEFAULT_CLIENT_PORT}"
 
         # topicfilter = "1234"
-        # socket.setsockopt_string(zmq.SUBSCRIBE, np.unicode(''))
-        # socket.setsockopt(zmq.CONFLATE, 1)
-        # socket.connect(url_publisher)
-        image_hub = imagezmq.ImageHub(open_port=url_publisher)
+        socket.setsockopt_string(zmq.SUBSCRIBE, np.unicode(''))
+        socket.setsockopt(zmq.CONFLATE, 1)
+        socket.connect(url_publisher)
         self.isNetworkRunning = True
 
         # socket.setsockopt(zmq.SUBSCRIBE, topicfilter)
 
 
-        self.console(f'Listening at {url_publisher}')
-        # self.console('self.isNetworkRunning', self.isNetworkRunning)
+        self.console(f'Connected To {url_publisher}')
+        self.console('self.isNetworkRunning', self.isNetworkRunning)
         while self.isNetworkRunning:
             if self.displayDebug:
                 self.networkFps.compute()
-            rpi_name, self.imgBuffer = image_hub.recv_image()
-            # result = socket.recv()
+            msg, self.imgBuffer = socket.recv_array(copy=False)
             # topic, messagedata = result.split()
-            # cv2.imshow(rpi_name, image) # 1 window for each RPi
-            # self.console(f'received : {result}')
-            # cv2.waitKey(1)
-            image_hub.send_reply(b'OK')
-            # time.sleep(000.1)
+            self.console(f'received : {msg}')
+            time.sleep(000.1)
         self.console('Network thread stopped.', 1)
 
     # def connectionListener2(self, workerUrl, zmqContext = None):
@@ -341,7 +339,6 @@ class NetCam:
             self.clearAll()
             return
 
-
         frame = self.imgBuffer
         if self.isStereoCam and not self.showStereo:
             # the Display is not in stereo, so remove the half of the picture
@@ -428,8 +425,8 @@ class NetCam:
         time.sleep(0.1)
 
         self.threadList = []
-        # zmqContext = zmq.Context.instance()
-        # zmqContext.term()
+        zmqContext = zmq.Context.instance()
+        zmqContext.term()
         time.sleep(1)
         self.console('Stopping Done.', 1)
 
@@ -437,7 +434,6 @@ class NetCam:
         widthMultiplier = 2 if self.isStereoCam else 1
         if self.captureResolution:
             self.displayHeight = int(self.displayWidth / (self.imgWidth // widthMultiplier) * self.imgHeight)
-
 
     def isRunning(self):
         return self.isCaptureRunning or self.isDisplayRunning or self.isNetworkRunning
