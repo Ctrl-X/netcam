@@ -41,7 +41,6 @@ class NetCam:
 
         self.fps = NetCam.MAX_FPS
         self.imgBuffer = None
-        self.jpgBuffer = None
         self.flipVertical = False
         self.isCaptureRunning = False
         self.isDisplayRunning = False
@@ -105,8 +104,8 @@ class NetCam:
         while self.isNetworkRunning:
             if self.displayDebug:
                 self.networkFps.compute()
-            # encoded, buffer = cv2.imencode('.jpg', self.imgBuffer)
-            socket.send(self.jpgBuffer, copy=False)
+            encoded, buffer = cv2.imencode('.jpg', self.imgBuffer)
+            socket.send(buffer, copy=False)
             # # Method 1
             # jpg_as_text = base64.b64encode(buffer)
             # socket.send(jpg_as_text)
@@ -166,7 +165,6 @@ class NetCam:
         self.isNetworkRunning = True
 
         # socket.setsockopt(zmq.SUBSCRIBE, topicfilter)
-        currentMilliTime = lambda: int(round(time.time() * 1000))
 
         self.console(f'Connected To {url_publisher}')
         self.console('self.isNetworkRunning', self.isNetworkRunning)
@@ -226,7 +224,6 @@ class NetCam:
 
         ## Guarantee the first frame
         self.videoStream.read(self.imgBuffer)
-        _, self.jpgBuffer = cv2.imencode('.jpg', self.imgBuffer)
 
         ## Launch the capture thread
         videoThread = Thread(target=self.captureThreadRunner, args=([self.videoStream]), daemon=True)
@@ -269,7 +266,6 @@ class NetCam:
             # stream.grab()
             if n == 2:
                 stream.read(self.imgBuffer)
-                _, self.jpgBuffer = cv2.imencode('.jpg', self.imgBuffer)
                 n = 0
                 if self.displayDebug:
                     self.captureFps.compute()
