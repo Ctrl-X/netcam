@@ -64,9 +64,6 @@ class NetCam:
 
         # Start the capture
         console('Starting NetCam Client...')
-        self.isCaptureRunning = True
-        ## Launch the camera capture thread
-        console('Init camera capture...', 1)
         self.startCapture()
         time.sleep(0.1)
 
@@ -98,10 +95,11 @@ class NetCam:
         url_publish = "tcp://*:%s" % NetCam.DEFAULT_CLIENT_PORT
         console(f'Publishing video on {url_publish}', 2)
         socket.bind(url_publish)
+        self.isNetworkRunning = True
         console('Network thread is now running ( ZMQ Publish)...', 2)
 
         i = 0
-        while self.isCaptureRunning:
+        while self.isNetworkRunning:
             if self.displayDebug:
                 self.networkFps.compute()
             # socket.send(self.imgBuffer)
@@ -113,8 +111,6 @@ class NetCam:
         """
              Launch the network client ( broadcast the camera signal)
         """
-        self.isCaptureRunning = True
-
         ## Launch the networdThread
         zmqContext = zmq.Context()
         socket = zmqContext.socket(zmq.SUB)
@@ -131,7 +127,6 @@ class NetCam:
         #
         # # Launch pool of worker threads
         # url_worker = "inproc://workers"
-        # self.isCaptureRunning = True
         # for i in range(5):
         #     workerThread = Thread(target=self.connectionListener, args=(url_worker,zmqContext))
         #     self.threadList.append(workerThread)
@@ -142,13 +137,15 @@ class NetCam:
     def serverThreadRunner(self, socket):
         url_publisher = f"tcp://192.168.1.246:{NetCam.DEFAULT_CLIENT_PORT}"
         socket.connect(url_publisher)
+        self.isNetworkRunning = True
 
         console(f'Connected To {url_publisher}')
-        console('self.isCaptureRunning', self.isCaptureRunning)
-        while self.isCaptureRunning:
+        console('self.isNetworkRunning', self.isNetworkRunning)
+        while self.isNetworkRunning:
             result = socket.recv_string()
             console('received', result)
             time.sleep(000.1)
+        console('Network thread stopped.', 1)
 
     # def connectionListener2(self, workerUrl, zmqContext = None):
     #     """Worker routine"""
@@ -159,7 +156,7 @@ class NetCam:
     #     socket = zmqContext.socket(zmq.REP)
     #     socket.connect(workerUrl)
     #
-    #     while self.isCaptureRunning:
+    #     while self.isNetworkRunning:
     #         if self.displayDebug:
     #             self.captureFps.compute()
     #         self.imgBuffer = socket.recv_string()
@@ -174,6 +171,10 @@ class NetCam:
         ## Close any previously opened stream
         if self.isCaptureRunning and self.videoStream:
             self.videoStream.release()
+            self.isCaptureRunning = False
+
+        ## Launch the camera capture thread
+        console('Init camera capture...', 1)
 
         ## prepare the triple buffering
         self.videoStream = self.initVideoStream(self.source)
@@ -181,8 +182,8 @@ class NetCam:
         ## Get the real width, height and fps supported by the camera
         self.imgWidth = int(self.videoStream.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.imgHeight = int(self.videoStream.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        self.computeDisplayHeight()
         self.fps = self.videoStream.get(cv2.CAP_PROP_FPS)
+        self.computeDisplayHeight()
         console(f'Capture resolution : {self.imgWidth} x {self.imgHeight} @ {self.fps}', 2)
         self.imgBuffer = np.empty(shape=(self.imgHeight, self.imgWidth, 3), dtype=np.uint8)
 
@@ -200,8 +201,8 @@ class NetCam:
         """
 
         videoStream = cv2.VideoCapture(0 if source == '0' else source, cv2.CAP_V4L2)
-        self.isCaptureRunning = videoStream.isOpened()
-        assert self.isCaptureRunning, 'Unable to open camera %s . Is your camera connected (look for videoX in /dev/ ? ' % source
+        isOpened = videoStream.isOpened()
+        assert isOpened, 'Unable to open camera %s . Is your camera connected (look for videoX in /dev/ ? ' % source
 
         ## Get the requested resolution
         width, height = resolutionFinder(self.captureResolution, self.isStereoCam)
@@ -222,9 +223,10 @@ class NetCam:
             Read next stream frame in a daemon thread
         :param stream: videoStream to read from
         """
+        self.isCaptureRunning = True
         console('Capture thread is now running.', 2)
         n = 0
-        while self.isCaptureRunning and stream.isOpened():
+        while self.isCaptureRunning:
             n += 1
             #stream.grab()
             if n == 2:
@@ -299,6 +301,7 @@ class NetCam:
         if not self.isDisplayRunning:
             cv2.destroyAllWindows()
             return
+        # Try to see if the window has been closed by clicking on the right upper cross
         try:
             isWindowClosed = cv2.getWindowProperty(NetCam.DEFAULT_WINDOW_NAME, 0)
             if isWindowClosed == -1:
@@ -374,14 +377,21 @@ class NetCam:
         console(f'Debugging is now {self.displayDebug}.')
         self.displayFps.initTime()
         self.captureFps.initTime()
+        self.networkFps.initTime()
 
     def clearAll(self):
-        if self.isCaptureRunning:
-            console('Stopping Capture...')
-            self.isCaptureRunning = False
+        if self.isNetworkRunning:
+            console('Stopping Network...')
+            self.isNetworkRunning = False
+        time.sleep(0.1)
         if self.isDisplayRunning:
             console('Stopping Display...')
             self.isDisplayRunning = False
+        time.sleep(0.1)
+        if self.isCaptureRunning:
+            console('Stopping Capture...')
+            self.isCaptureRunning = False
+        time.sleep(0.1)
 
         self.threadList = []
         zmqContext = zmq.Context.instance()
@@ -392,6 +402,9 @@ class NetCam:
     def computeDisplayHeight(self):
         widthMultiplier = 2 if self.isStereoCam else 1
         self.displayHeight = int(self.displayWidth / (self.imgWidth // widthMultiplier) * self.imgHeight)
+
+    def isRunning(self):
+        return self.isCaptureRunning or self.isDisplayRunning or self.isNetworkRunning
 
 
 def console(text, indentlevel=0):
