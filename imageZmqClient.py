@@ -16,6 +16,11 @@ picam = VideoStream()
 # picam.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'))  # define the compression to mjpg
 # picam.stream.stream.set(cv2.CAP_PROP_FRAME_WIDTH, 640*2)
 # picam.stream.stream.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+imgWidth = int(picam.stream.stream.get(cv2.CAP_PROP_FRAME_WIDTH))
+imgHeight = int(picam.stream.stream.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+print("width",imgWidth)
+print("Height",imgHeight)
 picam.start()
 time.sleep(2.0)  # allow camera sensor to warm up
 while True:  # send images as stream until Ctrl-C
