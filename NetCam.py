@@ -41,7 +41,7 @@ class NetCam:
         self.displayWidth, self.displayHeight = resolutionFinder(self.displayResolution)
 
         self.fps = NetCam.MAX_FPS
-        self.imgBuffer = [None]
+        self.imgBuffer = np.empty(shape=(self.displayHeight, self.displayWidth, 3), dtype=np.uint8)
         self.isCaptureRunning = False
         self.isDisplayRunning = False
         self.isNetworkRunning = False
@@ -148,27 +148,29 @@ class NetCam:
         # zmq.device(zmq.QUEUE, self.clients, self.workers)
 
     def serverThreadRunner(self):
-        # url_publisher = f"tcp://192.168.0.70:{NetCam.DEFAULT_CLIENT_PORT}"
+        url_publisher = f"tcp://*:{NetCam.DEFAULT_SERVER_PORT}"
 
         # topicfilter = "1234"
         # socket.setsockopt_string(zmq.SUBSCRIBE, np.unicode(''))
         # socket.setsockopt(zmq.CONFLATE, 1)
         # socket.connect(url_publisher)
-        image_hub = imagezmq.ImageHub()
+        image_hub = imagezmq.ImageHub(open_port=url_publisher)
         self.isNetworkRunning = True
 
         # socket.setsockopt(zmq.SUBSCRIBE, topicfilter)
 
 
-        # self.console(f'Connected To {url_publisher}')
+        self.console(f'Listening at {url_publisher}')
         # self.console('self.isNetworkRunning', self.isNetworkRunning)
         while self.isNetworkRunning:
+            if self.displayDebug:
+                self.networkFps.compute()
             rpi_name, self.imgBuffer = image_hub.recv_image()
             # result = socket.recv()
             # topic, messagedata = result.split()
             # cv2.imshow(rpi_name, image) # 1 window for each RPi
             # self.console(f'received : {result}')
-            cv2.waitKey(1)
+            # cv2.waitKey(1)
             image_hub.send_reply(b'OK')
             # time.sleep(000.1)
         self.console('Network thread stopped.', 1)
@@ -339,15 +341,21 @@ class NetCam:
             self.clearAll()
             return
 
+
         frame = self.imgBuffer
         if self.isStereoCam and not self.showStereo:
             # the Display is not in stereo, so remove the half of the picture
-            frame = frame[0:self.imgHeight, 0:self.imgWidth // 2]
+            height, width, _ = frame.shape
+            frame = frame[0:height, 0:width // 2]
 
         if self.displayHeight != self.imgHeight:
             # Resize the picture for display purpose
             width = self.displayWidth if not self.showStereo else self.displayWidth * 2
             frame = cv2.resize(frame, (width, self.displayHeight))
+        else:
+            frame = np.copy(self.imgBuffer)
+
+
 
         if self.displayDebug:
             self.displayFps.compute()
@@ -377,7 +385,7 @@ class NetCam:
         if key != -1:
             if key == ord('q'):  # q to quit
                 self.clearAll()
-            elif key == 35:  # Tilde to show debug
+            elif key == 35 or key == 47:  # Tilde to show debug
                 self.toggleDebug()
             elif key == 190:  # F1
                 self.setDisplayResolution('QVGA')
