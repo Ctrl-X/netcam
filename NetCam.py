@@ -353,7 +353,7 @@ class NetCam:
             width = self.displayWidth if not self.showStereo else self.displayWidth * 2
             frame = cv2.resize(frame, (width, self.displayHeight))
         else:
-            frame = np.copy(self.imgBuffer)
+            frame = np.copy(frame)
 
 
 
