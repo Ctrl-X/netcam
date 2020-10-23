@@ -40,7 +40,7 @@ class NetCam:
         self.displayWidth, self.displayHeight = resolutionFinder(self.displayResolution)
 
         self.fps = NetCam.MAX_FPS
-        self.imgBuffer = [None]
+        self.imgBuffer = None
         self.isCaptureRunning = False
         self.isDisplayRunning = False
         self.isNetworkRunning = False
@@ -160,7 +160,6 @@ class NetCam:
         self.isNetworkRunning = True
 
         # socket.setsockopt(zmq.SUBSCRIBE, topicfilter)
-
 
         self.console(f'Connected To {url_publisher}')
         self.console('self.isNetworkRunning', self.isNetworkRunning)
@@ -340,6 +339,9 @@ class NetCam:
             return
 
         frame = self.imgBuffer
+        if frame is None:
+            return  # Nothing to display
+
         if self.isStereoCam and not self.showStereo:
             # the Display is not in stereo, so remove the half of the picture
             height, width, _ = frame.shape
@@ -351,8 +353,6 @@ class NetCam:
             frame = cv2.resize(frame, (width, self.displayHeight))
         else:
             frame = np.copy(frame)
-
-
 
         if self.displayDebug:
             self.displayFps.compute()
@@ -468,9 +468,6 @@ def resolutionFinder(res, isstereocam=False):
     return switcher.get(res, (640 * widthMultiplier, 480))
 
 
-
-
-
 class SerializingSocket(zmq.Socket):
     """Numpy array serialization methods.
 
@@ -500,7 +497,7 @@ class SerializingSocket(zmq.Socket):
             dtype=str(A.dtype),
             shape=A.shape,
         )
-        self.send_json(md, flags | zmq.SNDMORE)
+        # self.send_json(md, flags | zmq.SNDMORE)
         return self.send(A, flags, copy=copy, track=track)
 
     def send_jpg(self,
@@ -543,7 +540,12 @@ class SerializingSocket(zmq.Socket):
           A: numpy array or OpenCV image reconstructed with dtype and shape.
         """
 
-        md = self.recv_json(flags=flags)
+        # md = self.recv_json(flags=flags)
+        md = dict(
+            msg="YOUPI",
+            dtype='uint8',
+            shape=[480,1280,3],
+        )
         msg = self.recv(flags=flags, copy=copy, track=track)
         A = np.frombuffer(msg, dtype=md['dtype'])
         return (md['msg'], A.reshape(md['shape']))
@@ -571,8 +573,6 @@ class SerializingSocket(zmq.Socket):
 
 class SerializingContext(zmq.Context):
     _socket_class = SerializingSocket
-
-
 
 
 class FpsCatcher:
