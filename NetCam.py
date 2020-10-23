@@ -94,7 +94,7 @@ class NetCam:
         :param socket:
         """
 
-        url_publish = "tcp://192.168.0.56:%s" % NetCam.DEFAULT_CLIENT_PORT
+        url_publish = "tcp://192.168.0.56:%s" % NetCam.DEFAULT_SERVER_PORT
         sender = imagezmq.ImageSender(connect_to=url_publish)
         rpi_name = socket.gethostname()
         self.console(f'Client {rpi_name} publishing video on {url_publish}', 2)
