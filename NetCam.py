@@ -101,24 +101,25 @@ class NetCam:
 
         # i = 0
         # topic = 1234
-        initTime = 0
-        currentTime = 0
+        initTime = FpsCatcher.currentMilliTime()
+        currentTime = initTime
         while self.isNetworkRunning:
-            self.networkFps.compute()
-            currentTime = self.networkFps.currentTime
+            if self.displayDebug:
+                self.networkFps.compute()
+            currentTime = FpsCatcher.currentMilliTime()
             encoded, buffer = cv2.imencode('.jpg', self.imgBuffer)
             socket.send(buffer, copy=False)
             processTime = currentTime - initTime
             waitTime = 1
             if processTime > 0 and processTime < 33:
                 waitTime = 33 - processTime
-            initTime = currentTime
 
             waitTime = waitTime/1000.0
             self.console(waitTime)
 
 
             time.sleep(waitTime)
+            initTime = currentTime
         self.console('Network thread stopped.', 1)
 
     def startServer(self):
