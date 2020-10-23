@@ -10,6 +10,7 @@ import time
 from threading import Thread
 import zmq
 import cv2
+import random
 import numpy as np
 
 
@@ -98,13 +99,17 @@ class NetCam:
         self.isNetworkRunning = True
         self.console('Network thread is now running ( ZMQ Publish )...', 2)
 
-        i = 0
+        # i = 0
         topic = 1234
         while self.isNetworkRunning:
             if self.displayDebug:
                 self.networkFps.compute()
             # socket.send(self.imgBuffer)
-            socket.send("%d %d" % (topic, i))
+            messagedata = random.randrange(1,215) - 80
+            print "%d %d" % (topic, messagedata)
+
+            socket.send("%d %d" % (topic, messagedata))
+            # i += 1
             time.sleep(0.001)
         self.console('Network thread stopped.', 1)
 
