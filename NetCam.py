@@ -8,7 +8,8 @@
 
 import time
 from threading import Thread
-import zmq
+import socket
+import imagezmq
 import cv2
 import random
 import numpy as np
@@ -78,24 +79,28 @@ class NetCam:
 
         ## Launch the networdThread
         self.console('Init network (client)...', 1)
-        zmqContext = zmq.Context()
-        socket = zmqContext.socket(zmq.SUB)
-        workerThread = Thread(target=self.clientThreadRunner, args=([socket]))
+
+        # zmqContext = zmq.Context()
+        # socket = zmqContext.socket(zmq.SUB)
+        workerThread = Thread(target=self.clientThreadRunner)
         self.threadList.append(workerThread)
         workerThread.start()
         time.sleep(0.1)
         self.console('NetCam Client started !')
 
-    def clientThreadRunner(self, socket):
+    def clientThreadRunner(self):
         """
             Publish Data to any connected Server
         :param socket:
         """
-        url_publish = "tcp://*:%s" % NetCam.DEFAULT_CLIENT_PORT
-        self.console(f'Client publishing video on {url_publish}', 2)
-        socket.bind(url_publish)
+
+        url_publish = "tcp://192.168.0.56:%s" % NetCam.DEFAULT_CLIENT_PORT
+        sender = imagezmq.ImageSender(connect_to=url_publish)
+        rpi_name = socket.gethostname()
+        self.console(f'Client {rpi_name} publishing video on {url_publish}', 2)
+        # socket.bind(url_publish)
         self.isNetworkRunning = True
-        self.console('Network thread is now running ( ZMQ Publish )...', 2)
+        # self.console('Network thread is now running ( ZMQ Publish )...', 2)
 
         # i = 0
         # topic = 1234
@@ -106,8 +111,8 @@ class NetCam:
             # messagedata = time.strftime('%l:%M:%S')
             # bytes = bytearray(messagedata,'utf-8')
             # print(messagedata,bytes)
-
-            socket.send(self.imgBuffer, copy=False)
+            sender.send_image(rpi_name, self.imgBuffer)
+            # socket.send(self.imgBuffer, copy=False)
             # i += 1
             time.sleep(0.001)
         self.console('Network thread stopped.', 1)
@@ -119,9 +124,9 @@ class NetCam:
         ## Launch the networdThread
         self.console('Init network (server)...', 1)
 
-        zmqContext = zmq.Context()
-        socket = zmqContext.socket(zmq.DISH)
-        workerThread = Thread(target=self.serverThreadRunner, args=([socket]))
+        # zmqContext = zmq.Context()
+        # socket = zmqContext.socket(zmq.DISH)
+        workerThread = Thread(target=self.serverThreadRunner)
         self.threadList.append(workerThread)
         workerThread.start()
         time.sleep(0.1)
@@ -142,25 +147,30 @@ class NetCam:
         #
         # zmq.device(zmq.QUEUE, self.clients, self.workers)
 
-    def serverThreadRunner(self, socket):
-        url_publisher = f"tcp://192.168.0.70:{NetCam.DEFAULT_CLIENT_PORT}"
+    def serverThreadRunner(self):
+        # url_publisher = f"tcp://192.168.0.70:{NetCam.DEFAULT_CLIENT_PORT}"
 
         # topicfilter = "1234"
-        socket.setsockopt_string(zmq.SUBSCRIBE, np.unicode(''))
-        socket.setsockopt(zmq.CONFLATE, 1)
-        socket.connect(url_publisher)
+        # socket.setsockopt_string(zmq.SUBSCRIBE, np.unicode(''))
+        # socket.setsockopt(zmq.CONFLATE, 1)
+        # socket.connect(url_publisher)
+        image_hub = imagezmq.ImageHub()
         self.isNetworkRunning = True
 
         # socket.setsockopt(zmq.SUBSCRIBE, topicfilter)
 
 
-        self.console(f'Connected To {url_publisher}')
-        self.console('self.isNetworkRunning', self.isNetworkRunning)
+        # self.console(f'Connected To {url_publisher}')
+        # self.console('self.isNetworkRunning', self.isNetworkRunning)
         while self.isNetworkRunning:
-            result = socket.recv()
+            rpi_name, image = image_hub.recv_image()
+            # result = socket.recv()
             # topic, messagedata = result.split()
-            self.console(f'received : {result}')
-            time.sleep(000.1)
+            cv2.imshow(rpi_name, image) # 1 window for each RPi
+            # self.console(f'received : {result}')
+            cv2.waitKey(1)
+            image_hub.send_reply(b'OK')
+            # time.sleep(000.1)
         self.console('Network thread stopped.', 1)
 
     # def connectionListener2(self, workerUrl, zmqContext = None):
