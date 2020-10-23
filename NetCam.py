@@ -101,29 +101,21 @@ class NetCam:
 
         # i = 0
         # topic = 1234
+        initTime = 0
+        currentTime = 0
         while self.isNetworkRunning:
-            if self.displayDebug:
-                self.networkFps.compute()
+            self.networkFps.compute()
+            currentTime = self.networkFps.currentTime
             encoded, buffer = cv2.imencode('.jpg', self.imgBuffer)
             socket.send(buffer, copy=False)
-            reply = socket.recv()
-            self.console(reply)
-            # # Method 1
-            # jpg_as_text = base64.b64encode(buffer)
-            # socket.send(jpg_as_text)
+            processTime = currentTime - initTime
+            waitTime = 1
+            if processTime < 33:
+                waitTime = 33 - processTime
+            initTime = currentTime
 
-            # # Method 2
-            # if self.imgBuffer.flags['C_CONTIGUOUS']:
-            #     # if image is already contiguous in memory just send it
-            #     socket.send_array(buffer, "YOUPI", copy=False)
-            # else:
-            #     # else make it contiguous before sending
-            #     self.imgBuffer = np.ascontiguousarray(self.imgBuffer)
-            #     socket.send_array(buffer, "YOUPI", copy=False)
 
-            # socket.send_array(self.imgBuffer, copy=False)
-            # i += 1
-            time.sleep(0.001)
+            time.sleep(waitTime/1000.0)
         self.console('Network thread stopped.', 1)
 
     def startServer(self):
@@ -180,7 +172,6 @@ class NetCam:
             buffer = np.frombuffer(buffer, dtype='uint8')
             buffer = buffer.reshape(shape)
             self.imgBuffer = cv2.imdecode(buffer, 1)
-            socket.send_string(b'OK')
             time.sleep(0.001)
         self.console('Network thread stopped.', 1)
 
