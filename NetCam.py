@@ -104,7 +104,7 @@ class NetCam:
                 self.networkFps.compute()
             # socket.send(self.imgBuffer)
             messagedata = time.strftime('%l:%M:%S')
-            print(messagedata)
+            print(bytes(messagedata, 'utf-8'))
 
             socket.send(messagedata)
             # i += 1
