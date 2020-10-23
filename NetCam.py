@@ -30,6 +30,7 @@ class NetCam:
                  isstereocam=False,
                  source='0', fullscreen=False, consolelog=True):
 
+        self.consoleLog = consolelog
         self.captureResolution = capture
         self.displayResolution = display
         self.isStereoCam = isstereocam
@@ -44,7 +45,6 @@ class NetCam:
 
         self.fps = NetCam.MAX_FPS
         self.imgBuffer = [None]
-        self.consoleLog = consolelog
         self.isCaptureRunning = False
         self.isDisplayRunning = False
         self.isNetworkRunning = False
