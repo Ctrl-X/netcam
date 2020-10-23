@@ -79,8 +79,8 @@ class NetCam:
 
         ## Launch the networdThread
         self.console('Init network (client)...', 1)
-        # zmqContext = zmq.Context()
-        zmqContext = SerializingContext()
+        zmqContext = zmq.Context()
+        # zmqContext = SerializingContext()
         socket = zmqContext.socket(zmq.PUB)
         workerThread = Thread(target=self.clientThreadRunner, args=([socket]))
         self.threadList.append(workerThread)
@@ -131,8 +131,8 @@ class NetCam:
         ## Launch the networdThread
         self.console('Init network (server)...', 1)
 
-        # zmqContext = zmq.Context()
-        zmqContext = SerializingContext()
+        zmqContext = zmq.Context()
+        # zmqContext = SerializingContext()
         socket = zmqContext.socket(zmq.SUB)
         workerThread = Thread(target=self.serverThreadRunner, args=([socket]))
         self.threadList.append(workerThread)
