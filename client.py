@@ -4,8 +4,8 @@ from NetCam import *
 
 if __name__ == '__main__':
     print('Started main.py...')
-    netCam = NetCam(display='VGA', capture='VGA',isstereocam=True)
-    netCam.invertVertical()
+    netCam = NetCam(display='VGA', capture='VGA', isstereocam=False)
+    # netCam.invertVertical()
     netCam.startClient()
 
     try:

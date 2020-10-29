@@ -12,11 +12,9 @@ import zmq
 import cv2
 import base64
 import numpy as np
-
+import socket
 
 class NetCam:
-    DEFAULT_IP = '10.10.64.154'
-    DEFAULT_SERVER_PORT = '5555'
     DEFAULT_CLIENT_PORT = '5556'
     DEFAULT_WINDOW_NAME = 'Stream'
 
@@ -27,9 +25,12 @@ class NetCam:
     TEXT_COLOR = (0, 0, 255)
     TEXT_POSITION = (0, 0)
 
-    def __init__(self, serverip=DEFAULT_IP, serverport=DEFAULT_SERVER_PORT, capture=None, display=None,
+    def __init__(self,
+                 capture=None, display=None,
                  isstereocam=False,
-                 source='0', fullscreen=False, consolelog=True):
+                 source='0',
+                 fullscreen=False,
+                 consolelog=True):
 
         self.consoleLog = consolelog
         self.captureResolution = capture
@@ -49,13 +50,15 @@ class NetCam:
         self.videoStream = None
 
         ## Debug informations
-        self.serverIp = serverip
-        self.serverPort = serverport
         self.displayDebug = False
         self.showStereo = False
         self.displayFps = FpsCatcher()
         self.captureFps = FpsCatcher()
         self.networkFps = FpsCatcher()
+
+        # Client information
+        self.hostname = socket.gethostname()
+        self.ip_address = socket.gethostbyname(self.hostname)
 
         ## Server Information
         self.threadList = []
@@ -72,13 +75,15 @@ class NetCam:
             self.startDisplay()
             time.sleep(0.1)
 
-    def startClient(self):
+    def startClient(self, port=None):
         """
             Launch the network client ( broadcast the camera signal)
         """
 
         ## Launch the networdThread
-        self.console('Init network (client)...', 1)
+        self.ip_port = port if port is not None else NetCam.DEFAULT_CLIENT_PORT
+
+        self.console(f'Init network client {self.hostname} on : {self.ip_address}:{self.ip_port}...', 1)
         zmqContext = zmq.Context()
         # zmqContext = SerializingContext()
         socket = zmqContext.socket(zmq.PUB)
@@ -93,7 +98,7 @@ class NetCam:
             Publish Data to any connected Server
         :param socket:
         """
-        url_publish = "tcp://*:%s" % NetCam.DEFAULT_CLIENT_PORT
+        url_publish = "tcp://*:%s" % self.ip_port
         self.console(f'Client publishing video on {url_publish}', 2)
         socket.bind(url_publish)
         self.isNetworkRunning = True
@@ -154,7 +159,7 @@ class NetCam:
         # zmq.device(zmq.QUEUE, self.clients, self.workers)
 
     def serverThreadRunner(self, socket):
-        url_publisher = f"tcp://192.168.1.247:{NetCam.DEFAULT_CLIENT_PORT}"
+        url_publisher = f"tcp://192.168.1.247:{self.ip_port}"
 
         # topicfilter = "1234"
         socket.setsockopt_string(zmq.SUBSCRIBE, np.unicode(''))
@@ -278,8 +283,6 @@ class NetCam:
 
     def getDetail(self):
         return ({
-            'serverIp': self.serverIp,
-            'serverPort': self.serverPort,
             'captureResolution': self.captureResolution,
             'displayResolution': self.displayResolution,
             'isStereo': self.isStereoCam,
