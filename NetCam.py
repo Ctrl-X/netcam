@@ -172,6 +172,11 @@ class NetCam:
 
         videoStream = cv2.VideoCapture(0 if source == '0' else source, cv2.CAP_V4L2)
         isOpened = videoStream.isOpened()
+        if not isOpened:
+            # Try to open the camera without the Video for linux driver
+            videoStream = cv2.VideoCapture(0 if source == '0' else source)
+            isOpened = videoStream.isOpened()
+
         assert isOpened, 'Unable to open camera %s . Is your camera connected (look for videoX in /dev/ ? ' % source
 
         ## Get the requested resolution
@@ -470,7 +475,7 @@ class NetCam:
 
     def console(self, text, indentlevel=0):
         if self.consoleLog:
-            output = time.strftime('%b %d at %l:%M:%S') + ' : '
+            output = time.strftime('%b %d at %H:%M:%S') + ' : '
             for count in range(0, indentlevel):
                 output = output + '\t'
             print(f'{output}{text}')
