@@ -41,7 +41,7 @@ class NetCam:
         self.displayWidth, self.displayHeight = resolutionFinder(self.displayResolution)
 
         self.fps = NetCam.MAX_FPS
-        self.imgBuffer = [None]
+        self.imgBuffer = [None]*NetCam.NBR_BUFFER
         self.imgBufferReady = 0
         self.imgBufferWriting = 0
         self.flipVertical = False
@@ -101,6 +101,7 @@ class NetCam:
 
         # Initialise each buffer
         for i in range(NetCam.NBR_BUFFER):
+            self.console(i)
             self.imgBuffer[i] = np.empty(shape=(self.imgHeight, self.imgWidth, 3), dtype=np.uint8)
 
 
@@ -196,7 +197,7 @@ class NetCam:
         while self.isCaptureRunning:
             # For buffering : Never read where we write
             self.imgBufferReady = self.imgBufferWriting
-            self.imgBufferWriting = 0 if self.imgBufferWriting == NetCam.NBR_BUFFER else self.imgBufferWriting + 1
+            self.imgBufferWriting = 0 if self.imgBufferWriting == NetCam.NBR_BUFFER-1 else self.imgBufferWriting + 1
 
             stream.read(self.imgBuffer[self.imgBufferWriting])
             if self.displayDebug:
@@ -268,7 +269,7 @@ class NetCam:
 
             # For buffering : Never read where we write
             self.imgBufferReady = self.imgBufferWriting
-            self.imgBufferWriting = 0 if self.imgBufferWriting == NetCam.NBR_BUFFER else self.imgBufferWriting + 1
+            self.imgBufferWriting = 0 if self.imgBufferWriting == NetCam.NBR_BUFFER-1 else self.imgBufferWriting + 1
 
             self.imgBuffer[self.imgBufferWriting] = cv2.imdecode(buffer, 1)
             time.sleep(0.001)
