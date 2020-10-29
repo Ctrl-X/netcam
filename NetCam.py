@@ -41,7 +41,9 @@ class NetCam:
         self.displayWidth, self.displayHeight = resolutionFinder(self.displayResolution)
 
         self.fps = NetCam.MAX_FPS
-        self.imgBuffer = None
+        self.imgBuffer = [None]
+        self.imgBufferReady = 0
+        self.imgBufferWriting = 0
         self.flipVertical = False
         self.isCaptureRunning = False
         self.isDisplayRunning = False
@@ -75,6 +77,41 @@ class NetCam:
             self.startDisplay()
             time.sleep(0.1)
 
+    def startCapture(self):
+        """
+            Start capturing video frame and put them in the imgBuffer
+        """
+        ## Close any previously opened stream
+        if self.isCaptureRunning and self.videoStream:
+            self.videoStream.release()
+            self.isCaptureRunning = False
+
+        ## Launch the camera capture thread
+        self.console('Init camera capture...', 1)
+
+        ## prepare the triple buffering
+        self.videoStream = self.initVideoStream(self.source)
+
+        ## Get the real width, height and fps supported by the camera
+        self.imgWidth = int(self.videoStream.get(cv2.CAP_PROP_FRAME_WIDTH))
+        self.imgHeight = int(self.videoStream.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        self.fps = self.videoStream.get(cv2.CAP_PROP_FPS)
+        self.computeDisplayHeight()
+        self.console(f'Capture resolution : {self.imgWidth} x {self.imgHeight} @ {self.fps}', 2)
+
+        # Initialise each buffer
+        for i in range(NetCam.NBR_BUFFER):
+            self.imgBuffer[i] = np.empty(shape=(self.imgHeight, self.imgWidth, 3), dtype=np.uint8)
+
+
+        ## Guarantee the first frame
+        self.videoStream.read(self.imgBuffer[self.imgBufferWriting])
+        self.imgBufferWriting += 1
+
+        ## Launch the capture thread
+        videoThread = Thread(target=self.captureThreadRunner, args=([self.videoStream]), daemon=True)
+        videoThread.start()
+
     def startClient(self, port=None):
         """
             Launch the network client ( broadcast the camera signal)
@@ -92,37 +129,6 @@ class NetCam:
         workerThread.start()
         time.sleep(0.1)
         self.console('NetCam Client started !')
-
-    def clientThreadRunner(self, socket):
-        """
-            Publish Data to any connected Server
-        :param socket:
-        """
-        url_publish = "tcp://*:%s" % self.ip_port
-        socket.bind(url_publish)
-        self.isNetworkRunning = True
-        self.console('Network thread is now running ( ZMQ Publish )...', 2)
-
-        # i = 0
-        # topic = 1234
-        initTime = FpsCatcher.currentMilliTime()
-        while self.isNetworkRunning:
-            if self.displayDebug:
-                self.networkFps.compute()
-            currentTime = FpsCatcher.currentMilliTime()
-            encoded, buffer = cv2.imencode('.jpg', self.imgBuffer)
-            socket.send(buffer, copy=False)
-            processTime = currentTime - initTime
-            waitTime = 1
-            if processTime > 0 and processTime < 33:
-                waitTime = 33 - processTime
-
-            waitTime = waitTime/1000.0
-
-
-            time.sleep(waitTime)
-            initTime = currentTime
-        self.console('Network thread stopped.', 1)
 
     def startServer(self):
         """
@@ -155,78 +161,6 @@ class NetCam:
         #
         # zmq.device(zmq.QUEUE, self.clients, self.workers)
 
-    def serverThreadRunner(self, socket):
-        url_publisher = f"tcp://192.168.1.247:{self.ip_port}"
-
-        # topicfilter = "1234"
-        socket.setsockopt_string(zmq.SUBSCRIBE, np.unicode(''))
-        socket.setsockopt(zmq.CONFLATE, 1)
-        socket.connect(url_publisher)
-        self.isNetworkRunning = True
-
-        # socket.setsockopt(zmq.SUBSCRIBE, topicfilter)
-
-        self.console(f'Connected To {url_publisher}')
-        self.console('self.isNetworkRunning', self.isNetworkRunning)
-        while self.isNetworkRunning:
-            if self.displayDebug:
-                self.networkFps.compute()
-
-            buffer = socket.recv(copy=False)
-            shape = [len(buffer.bytes), 1]
-
-            buffer = np.frombuffer(buffer, dtype='uint8')
-            buffer = buffer.reshape(shape)
-            self.imgBuffer = cv2.imdecode(buffer, 1)
-            time.sleep(0.001)
-        self.console('Network thread stopped.', 1)
-
-    # def connectionListener2(self, workerUrl, zmqContext = None):
-    #     """Worker routine"""
-    #     # Context to get inherited or create a new one
-    #     zmqContext = zmqContext or zmq.Context.instance()
-    #
-    #     # Socket to talk to dispatcher
-    #     socket = zmqContext.socket(zmq.REP)
-    #     socket.connect(workerUrl)
-    #
-    #     while self.isNetworkRunning:
-    #         if self.displayDebug:
-    #             self.captureFps.compute()
-    #         self.imgBuffer = socket.recv_string()
-    #         # self.console("Received request: [ %s ]" % (string))
-    #         time.sleep(0.001)
-    #         socket.send(b"ACK")
-
-    def startCapture(self):
-        """
-            Start capturing video frame and put them in the imgBuffer
-        """
-        ## Close any previously opened stream
-        if self.isCaptureRunning and self.videoStream:
-            self.videoStream.release()
-            self.isCaptureRunning = False
-
-        ## Launch the camera capture thread
-        self.console('Init camera capture...', 1)
-
-        ## prepare the triple buffering
-        self.videoStream = self.initVideoStream(self.source)
-
-        ## Get the real width, height and fps supported by the camera
-        self.imgWidth = int(self.videoStream.get(cv2.CAP_PROP_FRAME_WIDTH))
-        self.imgHeight = int(self.videoStream.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        self.fps = self.videoStream.get(cv2.CAP_PROP_FPS) or NetCam.MAX_FPS
-        self.computeDisplayHeight()
-        self.console(f'Capture resolution : {self.imgWidth} x {self.imgHeight} @ {self.fps}', 2)
-        self.imgBuffer = np.empty(shape=(self.imgHeight, self.imgWidth, 3), dtype=np.uint8)
-
-        ## Guarantee the first frame
-        self.videoStream.read(self.imgBuffer)
-
-        ## Launch the capture thread
-        videoThread = Thread(target=self.captureThreadRunner, args=([self.videoStream]), daemon=True)
-        videoThread.start()
 
     def initVideoStream(self, source):
         """
@@ -259,10 +193,12 @@ class NetCam:
         """
         self.isCaptureRunning = True
         self.console('Capture thread is now running.', 2)
-
         while self.isCaptureRunning:
+            # For buffering : Never read where we write
+            self.imgBufferReady = self.imgBufferWriting
+            self.imgBufferWriting = 0 if self.imgBufferWriting == NetCam.NBR_BUFFER else self.imgBufferWriting + 1
 
-            stream.read(self.imgBuffer)
+            stream.read(self.imgBuffer[self.imgBufferWriting])
             if self.displayDebug:
                 self.captureFps.compute()
 
@@ -274,6 +210,87 @@ class NetCam:
 
         self.videoStream = None
         self.console('Capture thread stopped.', 1)
+
+
+    def clientThreadRunner(self, socket):
+        """
+            Publish Data to any connected Server
+        :param socket:
+        """
+        url_publish = "tcp://*:%s" % self.ip_port
+        socket.bind(url_publish)
+        self.isNetworkRunning = True
+        self.console('Network thread is now running ( ZMQ Publish )...', 2)
+
+        # i = 0
+        # topic = 1234
+        initTime = FpsCatcher.currentMilliTime()
+        while self.isNetworkRunning:
+            if self.displayDebug:
+                self.networkFps.compute()
+            currentTime = FpsCatcher.currentMilliTime()
+            encoded, buffer = cv2.imencode('.jpg', self.imgBuffer[self.imgBufferReady])
+            socket.send(buffer, copy=False)
+            processTime = currentTime - initTime
+            waitTime = 1
+            if processTime > 0 and processTime < 33:
+                waitTime = 33 - processTime
+
+            waitTime = waitTime/1000.0
+
+
+            time.sleep(waitTime)
+            initTime = currentTime
+        self.console('Network thread stopped.', 1)
+
+    def serverThreadRunner(self, socket):
+        url_publisher = f"tcp://192.168.1.247:{self.ip_port}"
+
+        # topicfilter = "1234"
+        socket.setsockopt_string(zmq.SUBSCRIBE, np.unicode(''))
+        socket.setsockopt(zmq.CONFLATE, 1)
+        socket.connect(url_publisher)
+        self.isNetworkRunning = True
+
+        # socket.setsockopt(zmq.SUBSCRIBE, topicfilter)
+
+        self.console(f'Connected To {url_publisher}')
+        self.console('self.isNetworkRunning', self.isNetworkRunning)
+        while self.isNetworkRunning:
+            if self.displayDebug:
+                self.networkFps.compute()
+
+            buffer = socket.recv(copy=False)
+            shape = [len(buffer.bytes), 1]
+
+            buffer = np.frombuffer(buffer, dtype='uint8')
+            buffer = buffer.reshape(shape)
+
+            # For buffering : Never read where we write
+            self.imgBufferReady = self.imgBufferWriting
+            self.imgBufferWriting = 0 if self.imgBufferWriting == NetCam.NBR_BUFFER else self.imgBufferWriting + 1
+
+            self.imgBuffer[self.imgBufferWriting] = cv2.imdecode(buffer, 1)
+            time.sleep(0.001)
+        self.console('Network thread stopped.', 1)
+
+    # def connectionListener2(self, workerUrl, zmqContext = None):
+    #     """Worker routine"""
+    #     # Context to get inherited or create a new one
+    #     zmqContext = zmqContext or zmq.Context.instance()
+    #
+    #     # Socket to talk to dispatcher
+    #     socket = zmqContext.socket(zmq.REP)
+    #     socket.connect(workerUrl)
+    #
+    #     while self.isNetworkRunning:
+    #         if self.displayDebug:
+    #             self.captureFps.compute()
+    #         self.imgBuffer = socket.recv_string()
+    #         # self.console("Received request: [ %s ]" % (string))
+    #         time.sleep(0.001)
+    #         socket.send(b"ACK")
+
 
     def getDetail(self):
         return ({
@@ -342,7 +359,7 @@ class NetCam:
             self.clearAll()
             return
 
-        frame = self.imgBuffer
+        frame = self.imgBuffer[self.imgBufferReady]
         if frame is None:
             return  # Nothing to display
 
