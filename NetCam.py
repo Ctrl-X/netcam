@@ -97,7 +97,7 @@ class NetCam:
         self.imgHeight = int(self.videoStream.get(cv2.CAP_PROP_FRAME_HEIGHT))
         self.fps = self.videoStream.get(cv2.CAP_PROP_FPS)
         self.computeDisplayHeight()
-        self.console(f'Capture resolution : {self.imgWidth} x {self.imgHeight} @ {self.fps}', 2)
+        self.console(f'Capture resolution : {self.imgWidth} x {self.imgHeight} @ {self.fps}', 1)
 
         # Initialise each buffer
         for i in range(NetCam.NBR_BUFFER):
@@ -192,7 +192,7 @@ class NetCam:
         :param stream: videoStream to read from
         """
         self.isCaptureRunning = True
-        self.console('Capture thread is now running.', 2)
+        self.console('Capture thread is now running.', 1)
         while self.isCaptureRunning:
             # For buffering : Never read where we write
             self.imgBufferReady = self.imgBufferWriting
@@ -467,11 +467,10 @@ class NetCam:
 
     def console(self, text, indentlevel=0):
         if self.consoleLog:
-            output = ''
+            output = time.strftime('%b %d at %l:%M:%S') + ' : '
             for count in range(0, indentlevel):
-                output = output + '---'
-            output = output + time.strftime('%b %d at %l:%M:%S')
-            print(f'{output} : {text}')
+                output = output + '\t'
+            print(f'{output}{text}')
 
 
 def resolutionFinder(res, isstereocam=False):
