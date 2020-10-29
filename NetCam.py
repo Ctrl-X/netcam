@@ -469,7 +469,7 @@ class NetCam:
         if self.consoleLog:
             output = ''
             for count in range(0, indentlevel):
-                output = output + '\t'
+                output = output + '---'
             output = output + time.strftime('%b %d at %l:%M:%S')
             print(f'{output} : {text}')
 
