@@ -99,7 +99,6 @@ class NetCam:
         :param socket:
         """
         url_publish = "tcp://*:%s" % self.ip_port
-        self.console(f'Client publishing video on {url_publish}', 2)
         socket.bind(url_publish)
         self.isNetworkRunning = True
         self.console('Network thread is now running ( ZMQ Publish )...', 2)
@@ -107,7 +106,6 @@ class NetCam:
         # i = 0
         # topic = 1234
         initTime = FpsCatcher.currentMilliTime()
-        currentTime = initTime
         while self.isNetworkRunning:
             if self.displayDebug:
                 self.networkFps.compute()
@@ -120,7 +118,6 @@ class NetCam:
                 waitTime = 33 - processTime
 
             waitTime = waitTime/1000.0
-            self.console(waitTime)
 
 
             time.sleep(waitTime)
@@ -219,7 +216,7 @@ class NetCam:
         ## Get the real width, height and fps supported by the camera
         self.imgWidth = int(self.videoStream.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.imgHeight = int(self.videoStream.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        self.fps = self.videoStream.get(cv2.CAP_PROP_FPS)
+        self.fps = self.videoStream.get(cv2.CAP_PROP_FPS) or NetCam.MAX_FPS
         self.computeDisplayHeight()
         self.console(f'Capture resolution : {self.imgWidth} x {self.imgHeight} @ {self.fps}', 2)
         self.imgBuffer = np.empty(shape=(self.imgHeight, self.imgWidth, 3), dtype=np.uint8)
@@ -262,15 +259,12 @@ class NetCam:
         """
         self.isCaptureRunning = True
         self.console('Capture thread is now running.', 2)
-        n = 0
+
         while self.isCaptureRunning:
-            n += 1
-            # stream.grab()
-            if n == 2:
-                stream.read(self.imgBuffer)
-                n = 0
-                if self.displayDebug:
-                    self.captureFps.compute()
+
+            stream.read(self.imgBuffer)
+            if self.displayDebug:
+                self.captureFps.compute()
 
             time.sleep(0.001)
 
@@ -330,8 +324,8 @@ class NetCam:
 
         if not self.displayResolution:
             # No Display was setup
-            self.console('You need to setup the display Resolution in NetCam constructor. ex : NetCam(display=\'VGA\'')
-            time(1)
+            # self.console('You need to setup the display Resolution in NetCam constructor. ex : NetCam(display=\'VGA\'')
+            # time(1)
             return
         if not self.isDisplayRunning:
             cv2.destroyAllWindows()
@@ -440,12 +434,12 @@ class NetCam:
         self.threadList = []
         zmqContext = zmq.Context.instance()
         zmqContext.term()
-        time.sleep(1)
-        self.console('Stopping Done.', 1)
+        time.sleep(0.5)
+        self.console('Stopping Done.')
 
     def computeDisplayHeight(self):
         widthMultiplier = 2 if self.isStereoCam else 1
-        if self.captureResolution:
+        if self.captureResolution and self.displayResolution:
             self.displayHeight = int(self.displayWidth / (self.imgWidth // widthMultiplier) * self.imgHeight)
 
     def invertVertical(self):
