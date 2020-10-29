@@ -87,7 +87,7 @@ class NetCam:
             self.isCaptureRunning = False
 
         ## Launch the camera capture thread
-        self.console('Init camera capture...', 1)
+        # self.console('Init camera capture...', 1)
 
         ## prepare the triple buffering
         self.videoStream = self.initVideoStream(self.source)
@@ -101,7 +101,6 @@ class NetCam:
 
         # Initialise each buffer
         for i in range(NetCam.NBR_BUFFER):
-            self.console(i)
             self.imgBuffer[i] = np.empty(shape=(self.imgHeight, self.imgWidth, 3), dtype=np.uint8)
 
 
@@ -121,7 +120,7 @@ class NetCam:
         ## Launch the networdThread
         self.ip_port = port if port is not None else NetCam.DEFAULT_CLIENT_PORT
 
-        self.console(f'Init network client {self.hostname} on : {self.ip_address}:{self.ip_port}...', 1)
+        self.console(f'Init network client {self.hostname} on : {self.ip_address}:{self.ip_port}...')
         zmqContext = zmq.Context()
         # zmqContext = SerializingContext()
         socket = zmqContext.socket(zmq.PUB)
@@ -221,7 +220,7 @@ class NetCam:
         url_publish = "tcp://*:%s" % self.ip_port
         socket.bind(url_publish)
         self.isNetworkRunning = True
-        self.console('Network thread is now running ( ZMQ Publish )...', 2)
+        self.console('Network thread is now running ( ZMQ Publish )...', 1)
 
         # i = 0
         # topic = 1234
@@ -242,7 +241,7 @@ class NetCam:
 
             time.sleep(waitTime)
             initTime = currentTime
-        self.console('Network thread stopped.', 1)
+        self.console('Network thread stopped.')
 
     def serverThreadRunner(self, socket):
         url_publisher = f"tcp://192.168.1.247:{self.ip_port}"
@@ -273,7 +272,7 @@ class NetCam:
 
             self.imgBuffer[self.imgBufferWriting] = cv2.imdecode(buffer, 1)
             time.sleep(0.001)
-        self.console('Network thread stopped.', 1)
+        self.console('Network thread stopped.')
 
     # def connectionListener2(self, workerUrl, zmqContext = None):
     #     """Worker routine"""
