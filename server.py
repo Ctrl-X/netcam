@@ -1,8 +1,8 @@
 from NetCam import *
 
 if __name__ == "__main__":
-    netCam = NetCam(display='VGA', isstereocam=True)
-    netCam.invertVertical()
+    netCam = NetCam(display='VGA')
+    # netCam.invertVertical()
     netCam.startServer()
 
     try:

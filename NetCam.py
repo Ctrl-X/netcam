@@ -60,7 +60,9 @@ class NetCam:
 
         # Client information
         self.hostname = socket.gethostname()
-        self.ip_address = socket.gethostbyname(self.hostname)
+
+        self.ip_address = get_ip()
+        self.ip_port = NetCam.DEFAULT_CLIENT_PORT
 
         ## Server Information
         self.threadList = []
@@ -244,7 +246,7 @@ class NetCam:
         self.console('Network thread stopped.')
 
     def serverThreadRunner(self, socket):
-        url_publisher = f"tcp://192.168.1.247:{self.ip_port}"
+        url_publisher = f"tcp://192.168.1.96:{self.ip_port}"
 
         # topicfilter = "1234"
         socket.setsockopt_string(zmq.SUBSCRIBE, np.unicode(''))
@@ -315,7 +317,7 @@ class NetCam:
     def setDisplayResolution(self, resolution):
         if (resolution != None):
             self.displayResolution = resolution
-            self.displayWidth, _ = resolutionFinder(resolution)
+            self.displayWidth, self.displayHeight = resolutionFinder(resolution)
             self.computeDisplayHeight()
             cv2.resizeWindow(NetCam.DEFAULT_WINDOW_NAME, self.displayWidth, self.displayHeight)
             self.console(f'Changed Display resolution for : {resolution} ({self.displayWidth} x {self.displayHeight})')
@@ -408,15 +410,15 @@ class NetCam:
                 self.clearAll()
             elif key == 35 or key == 47:  # Tilde to show debug
                 self.toggleDebug()
-            elif key == 190:  # F1
+            elif key == 190 or key == 122:  # F1
                 self.setDisplayResolution('QVGA')
-            elif key == 191:  # F2
+            elif key == 191 or key == 120:  # F2
                 self.setDisplayResolution('VGA')
-            elif key == 192:  # F3
+            elif key == 192 or key == 99:  # F3
                 self.setDisplayResolution('HD')
-            elif key == 193:  # F4
+            elif key == 193 or key == 118:  # F4
                 self.setDisplayResolution('FHD')
-            elif key == 194:  # F5
+            elif key == 194 or key == 96:  # F5
                 self.setDisplayResolution('2K')
             elif key == ord('f'):  # F to toggle fullscreen
                 self.toggleFullScreen()
@@ -456,7 +458,8 @@ class NetCam:
 
     def computeDisplayHeight(self):
         widthMultiplier = 2 if self.isStereoCam else 1
-        if self.captureResolution and self.displayResolution:
+
+        if self.imgWidth and self.imgHeight and self.displayWidth:
             self.displayHeight = int(self.displayWidth / (self.imgWidth // widthMultiplier) * self.imgHeight)
 
     def invertVertical(self):
@@ -493,6 +496,17 @@ def resolutionFinder(res, isstereocam=False):
     }
     return switcher.get(res, (640 * widthMultiplier, 480))
 
+def get_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        # doesn't even have to be reachable
+        s.connect(('10.255.255.255', 1))
+        IP = s.getsockname()[0]
+    except Exception:
+        IP = '127.0.0.1'
+    finally:
+        s.close()
+    return IP
 
 
 class FpsCatcher:
