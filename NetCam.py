@@ -236,14 +236,14 @@ class NetCam:
             # encoded, buffer = cv2.imencode('.jpg', np.empty(shape=(5, 5, 3), dtype=np.uint8))
             encoded, buffer = cv2.imencode('.jpg', self.imgBuffer[self.imgBufferReady])
 
-            bufferSize = len(buffer)/1024 * 8
+            bufferSize = len(buffer)/1024
             bufferSizeSec += bufferSize
             frameCount += 1
-            self.console(f'buffer size : {bufferSize} ko')
+            self.console(f'buffer size : {bufferSize*8} kb ({bufferSize}ko)')
 
             if currentTime - initTime > 1000:
                 self.console(f'frame send per sec: {frameCount}',1)
-                self.console(f'buffer size per sec : {bufferSizeSec} ko',1)
+                self.console(f'buffer size per sec :  {bufferSizeSec*8} kb ({bufferSizeSec}ko)',1)
                 bufferSizeSec = 0
                 frameCount = 0
                 initTime = currentTime
