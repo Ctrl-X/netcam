@@ -22,7 +22,7 @@ class NetCam:
 
     DEFAULT_RES = 'HD'
     MAX_FPS = 60
-    NBR_BUFFER = 5
+    NBR_BUFFER = 2
 
     TEXT_COLOR = (0, 0, 255)
     TEXT_POSITION = (0, 0)
