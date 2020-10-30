@@ -4,10 +4,11 @@ from NetCam import *
 
 if __name__ == '__main__':
     print('Started main.py...')
-    netCam = NetCam(display=None, capture='VGA', isstereocam=False)
-    # netCam = NetCam(display='VGA', capture='VGA', isstereocam=False)
+    netCam = NetCam(display=None, capture='VGA', isStereoCam=False)
+
+    # netCam = NetCam(display='VGA', capture='VGA', isStereoCam=False)
     # netCam.invertVertical()
-    netCam.startClient()
+    netCam.startBroadcast()
 
     try:
         while netCam.isRunning():

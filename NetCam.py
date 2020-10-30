@@ -14,41 +14,45 @@ import base64
 import numpy as np
 import socket
 
+
 class NetCam:
     DEFAULT_CLIENT_PORT = '5556'
     DEFAULT_WINDOW_NAME = 'Stream'
+    WINDOW_COUNTER = 0
 
     DEFAULT_RES = 'HD'
     MAX_FPS = 60
-    NBR_BUFFER = 3
+    NBR_BUFFER = 5
 
     TEXT_COLOR = (0, 0, 255)
     TEXT_POSITION = (0, 0)
 
     def __init__(self,
-                 capture=None, display=None,
-                 isstereocam=False,
+                 capture='VGA',
+                 display=None,
+                 isStereoCam=False,
                  source='0',
-                 fullscreen=False,
+                 ip=None,
+                 port=None,
                  consolelog=True):
 
         self.consoleLog = consolelog
         self.captureResolution = capture
         self.displayResolution = display
-        self.isStereoCam = isstereocam
+        self.isStereoCam = isStereoCam
         self.source = source
         self.imgWidth, self.imgHeight = resolutionFinder(self.captureResolution, self.isStereoCam)
         self.displayWidth, self.displayHeight = resolutionFinder(self.displayResolution)
 
         self.fps = NetCam.MAX_FPS
-        self.imgBuffer = [None]*NetCam.NBR_BUFFER
+        self.imgBuffer = [None] * NetCam.NBR_BUFFER
         self.imgBufferReady = 0
         self.imgBufferWriting = 0
         self.flipVertical = False
         self.isCaptureRunning = False
         self.isDisplayRunning = False
         self.isNetworkRunning = False
-        self.fullScreen = fullscreen
+        self.fullScreen = False
         self.videoStream = None
 
         ## Debug informations
@@ -58,25 +62,32 @@ class NetCam:
         self.captureFps = FpsCatcher()
         self.networkFps = FpsCatcher()
 
-        # Client information
+        # Network information
         self.hostname = socket.gethostname()
+        self.ip_address = ip
+        self.windowName = ip or self.hostname or NetCam.DEFAULT_WINDOW_NAME
+        NetCam.WINDOW_COUNTER += 1
+        if NetCam.WINDOW_COUNTER > 1:
+            self.windowName += f' ({NetCam.WINDOW_COUNTER})'
 
-        self.ip_address = get_ip()
-        self.ip_port = NetCam.DEFAULT_CLIENT_PORT
+        self.ip_port = port or NetCam.DEFAULT_CLIENT_PORT
 
-        ## Server Information
         self.threadList = []
 
         self.console('Starting NetCam...')
 
-        # Start the capture
-        if self.captureResolution:
+        if self.ip_address is None:
+            # Start the capture
             self.startCapture()
-            time.sleep(0.1)
+        else:
+            # Start to receive the stream
+            self.startReceive()
 
-        ## Launch the display (main thread)
+        time.sleep(0.1)
+
+        ## Init the display when requested (on main thread)
         if self.displayResolution:
-            self.startDisplay()
+            self.initDisplay()
             time.sleep(0.1)
 
     def startCapture(self):
@@ -89,7 +100,7 @@ class NetCam:
             self.isCaptureRunning = False
 
         ## Launch the camera capture thread
-        # self.console('Init camera capture...', 1)
+        self.console('Init camera capture...', 1)
 
         ## prepare the triple buffering
         self.videoStream = self.initVideoStream(self.source)
@@ -105,7 +116,6 @@ class NetCam:
         for i in range(NetCam.NBR_BUFFER):
             self.imgBuffer[i] = np.empty(shape=(self.imgHeight, self.imgWidth, 3), dtype=np.uint8)
 
-
         ## Guarantee the first frame
         self.videoStream.read(self.imgBuffer[self.imgBufferWriting])
         self.imgBufferWriting += 1
@@ -114,15 +124,16 @@ class NetCam:
         videoThread = Thread(target=self.captureThreadRunner, args=([self.videoStream]), daemon=True)
         videoThread.start()
 
-    def startClient(self, port=None):
+    def startBroadcast(self, port=None):
         """
             Launch the network client ( broadcast the camera signal)
         """
 
         ## Launch the networdThread
+        self.ip_address = get_ip()
         self.ip_port = port if port is not None else NetCam.DEFAULT_CLIENT_PORT
 
-        self.console(f'Init network client {self.hostname} on : {self.ip_address}:{self.ip_port}...')
+        self.console(f'Launch broadcast...')
         zmqContext = zmq.Context()
         # zmqContext = SerializingContext()
         socket = zmqContext.socket(zmq.PUB)
@@ -130,14 +141,14 @@ class NetCam:
         self.threadList.append(workerThread)
         workerThread.start()
         time.sleep(0.1)
-        self.console('NetCam Client started !')
+        self.console(f'Now broadcasting. URI of Camera : {self.ip_address}:{self.ip_port} !')
 
-    def startServer(self):
+    def startReceive(self):
         """
              Launch the network client ( broadcast the camera signal)
         """
         ## Launch the networdThread
-        self.console('Init network (server)...', 1)
+        self.console(f'Connecting to camera on {self.ip_address}:{self.ip_port}...', 1)
 
         zmqContext = zmq.Context()
         # zmqContext = SerializingContext()
@@ -146,23 +157,6 @@ class NetCam:
         self.threadList.append(workerThread)
         workerThread.start()
         time.sleep(0.1)
-        self.console('NetCam Server started !')
-        # # Socket to talk to clients
-        # self.clients = zmqContext.socket(zmq.ROUTER)
-        # self.clients.bind(f'tcp://*:{NetCam.DEFAULT_SERVER_PORT}')
-        #
-        # # Socket to talk to workers
-        # self.workers = zmqContext.socket(zmq.DEALER)
-        #
-        # # Launch pool of worker threads
-        # url_worker = "inproc://workers"
-        # for i in range(5):
-        #     workerThread = Thread(target=self.connectionListener, args=(url_worker,zmqContext))
-        #     self.threadList.append(workerThread)
-        #     workerThread.start()
-        #
-        # zmq.device(zmq.QUEUE, self.clients, self.workers)
-
 
     def initVideoStream(self, source):
         """
@@ -203,7 +197,7 @@ class NetCam:
         while self.isCaptureRunning:
             # For buffering : Never read where we write
             self.imgBufferReady = self.imgBufferWriting
-            self.imgBufferWriting = 0 if self.imgBufferWriting == NetCam.NBR_BUFFER-1 else self.imgBufferWriting + 1
+            self.imgBufferWriting = 0 if self.imgBufferWriting == NetCam.NBR_BUFFER - 1 else self.imgBufferWriting + 1
 
             stream.read(self.imgBuffer[self.imgBufferWriting])
             if self.displayDebug:
@@ -217,7 +211,6 @@ class NetCam:
 
         self.videoStream = None
         self.console('Capture thread stopped.', 1)
-
 
     def clientThreadRunner(self, socket):
         """
@@ -243,15 +236,14 @@ class NetCam:
             if processTime > 0 and processTime < 33:
                 waitTime = 33 - processTime
 
-            waitTime = waitTime/1000.0
-
+            waitTime = waitTime / 1000.0
 
             time.sleep(waitTime)
             initTime = currentTime
         self.console('Network thread stopped.')
 
     def serverThreadRunner(self, socket):
-        url_publisher = f"tcp://192.168.1.96:{self.ip_port}"
+        url_publisher = f"tcp://{self.ip_address}:{self.ip_port}"
 
         # topicfilter = "1234"
         socket.setsockopt_string(zmq.SUBSCRIBE, np.unicode(''))
@@ -262,42 +254,36 @@ class NetCam:
         # socket.setsockopt(zmq.SUBSCRIBE, topicfilter)
 
         self.console(f'Connected To {url_publisher}')
-        self.console('self.isNetworkRunning', self.isNetworkRunning)
+        timeout = 300*1000  # 300 sec before timeout
         while self.isNetworkRunning:
-            if self.displayDebug:
-                self.networkFps.compute()
 
-            buffer = socket.recv(copy=False)
-            shape = [len(buffer.bytes), 1]
 
-            buffer = np.frombuffer(buffer, dtype='uint8')
-            buffer = buffer.reshape(shape)
+            try:
+                buffer = socket.recv(flags=zmq.NOBLOCK, copy=False)
+                shape = [len(buffer.bytes), 1]
 
-            # For buffering : Never read where we write
-            self.imgBufferReady = self.imgBufferWriting
-            self.imgBufferWriting = 0 if self.imgBufferWriting == NetCam.NBR_BUFFER-1 else self.imgBufferWriting + 1
+                buffer = np.frombuffer(buffer, dtype='uint8')
+                buffer = buffer.reshape(shape)
 
-            self.imgBuffer[self.imgBufferWriting] = cv2.imdecode(buffer, 1)
+                # For buffering : Never read where we write
+                self.imgBufferReady = self.imgBufferWriting
+                self.imgBufferWriting = 0 if self.imgBufferWriting == NetCam.NBR_BUFFER - 1 else self.imgBufferWriting + 1
+
+                self.imgBuffer[self.imgBufferWriting] = cv2.imdecode(buffer, 1)
+                timeout = 3000
+                if self.displayDebug:
+                    self.networkFps.compute()
+            except Exception as err:
+                timeout -= 1
+                if timeout % 3000 == 0:
+                    self.console(f'Waiting image from {url_publisher} ({timeout/1000} sec. before abording) ...')
+                if timeout <= 0:
+                    self.isNetworkRunning = False
+
             time.sleep(0.001)
+
+        self.isNetworkRunning = False
         self.console('Network thread stopped.')
-
-    # def connectionListener2(self, workerUrl, zmqContext = None):
-    #     """Worker routine"""
-    #     # Context to get inherited or create a new one
-    #     zmqContext = zmqContext or zmq.Context.instance()
-    #
-    #     # Socket to talk to dispatcher
-    #     socket = zmqContext.socket(zmq.REP)
-    #     socket.connect(workerUrl)
-    #
-    #     while self.isNetworkRunning:
-    #         if self.displayDebug:
-    #             self.captureFps.compute()
-    #         self.imgBuffer = socket.recv_string()
-    #         # self.console("Received request: [ %s ]" % (string))
-    #         time.sleep(0.001)
-    #         socket.send(b"ACK")
-
 
     def getDetail(self):
         return ({
@@ -310,39 +296,14 @@ class NetCam:
             'isCaptureRunning': self.isCaptureRunning,
         })
 
-    def startDisplay(self):
+    def initDisplay(self):
         self.console('Init display...', 1)
         self.console(f'Display resolution : {self.displayResolution} ({self.displayWidth} x {self.displayHeight})', 2)
-        cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WINDOW_GUI_NORMAL)
+        cv2.namedWindow(self.windowName, cv2.WINDOW_GUI_NORMAL)
         self.toggleFullScreen(self.fullScreen)
         self.isDisplayRunning = True
         time.sleep(0.1)
         self.console('Display is now ready.', 2)
-
-    def setDisplayResolution(self, resolution):
-        if (resolution != None):
-            self.displayResolution = resolution
-            self.displayWidth, self.displayHeight = resolutionFinder(resolution)
-            self.computeDisplayHeight()
-            cv2.resizeWindow(NetCam.DEFAULT_WINDOW_NAME, self.displayWidth, self.displayHeight)
-            self.console(f'Changed Display resolution for : {resolution} ({self.displayWidth} x {self.displayHeight})')
-
-    def toggleFullScreen(self, isFullScreen=None):
-        self.fullScreen = isFullScreen if isFullScreen is not None else not self.fullScreen
-        if self.fullScreen:
-            self.console(f'Toggle fullscreen')
-            cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_FULLSCREEN)
-            cv2.setWindowProperty(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
-            # cv2.setWindowProperty(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_TOPMOST, 1.0)
-        else:
-            cv2.namedWindow(NetCam.DEFAULT_WINDOW_NAME, cv2.WINDOW_AUTOSIZE)
-            cv2.setWindowProperty(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_NORMAL)
-            cv2.resizeWindow(NetCam.DEFAULT_WINDOW_NAME, self.displayWidth, self.displayHeight)
-            # cv2.setWindowProperty(NetCam.DEFAULT_WINDOW_NAME, cv2.WND_PROP_TOPMOST, 0.0)
-
-    def toggleDisplayStereo(self, isShowStereo=None):
-        self.showStereo = isShowStereo if isShowStereo is not None else not self.showStereo
-        self.console(f'Show Stereo : {self.showStereo}')
 
     def display(self):
 
@@ -356,7 +317,7 @@ class NetCam:
             return
         # Try to see if the window has been closed by clicking on the right upper cross
         try:
-            isWindowClosed = cv2.getWindowProperty(NetCam.DEFAULT_WINDOW_NAME, 0)
+            isWindowClosed = cv2.getWindowProperty(self.windowName, 0)
             if isWindowClosed == -1:
                 # the window has been closed
                 self.console("Window was closed.")
@@ -405,8 +366,33 @@ class NetCam:
                                 thickness,
                                 cv2.LINE_AA)
 
-        cv2.imshow(NetCam.DEFAULT_WINDOW_NAME, frame)
+        cv2.imshow(self.windowName, frame)
         self.listenKeyboard()
+
+    def setDisplayResolution(self, resolution):
+        if (resolution != None):
+            self.displayResolution = resolution
+            self.displayWidth, self.displayHeight = resolutionFinder(resolution)
+            self.computeDisplayHeight()
+            cv2.resizeWindow(self.windowName, self.displayWidth, self.displayHeight)
+            self.console(f'Changed Display resolution for : {resolution} ({self.displayWidth} x {self.displayHeight})')
+
+    def toggleFullScreen(self, isFullScreen=None):
+        self.fullScreen = isFullScreen if isFullScreen is not None else not self.fullScreen
+        if self.fullScreen:
+            self.console(f'Toggle fullscreen')
+            cv2.namedWindow(self.windowName, cv2.WND_PROP_FULLSCREEN)
+            cv2.setWindowProperty(self.windowName, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_FULLSCREEN)
+            # cv2.setWindowProperty(self.windowName, cv2.WND_PROP_TOPMOST, 1.0)
+        else:
+            cv2.namedWindow(self.windowName, cv2.WINDOW_AUTOSIZE)
+            cv2.setWindowProperty(self.windowName, cv2.WND_PROP_FULLSCREEN, cv2.WINDOW_NORMAL)
+            cv2.resizeWindow(self.windowName, self.displayWidth, self.displayHeight)
+            # cv2.setWindowProperty(self.windowName, cv2.WND_PROP_TOPMOST, 0.0)
+
+    def toggleDisplayStereo(self, isShowStereo=None):
+        self.showStereo = isShowStereo if isShowStereo is not None else not self.showStereo
+        self.console(f'Show Stereo : {self.showStereo}')
 
     def listenKeyboard(self):
         key = cv2.waitKey(20)
@@ -500,6 +486,7 @@ def resolutionFinder(res, isstereocam=False):
         '2K': (2048 * widthMultiplier, 1080)
     }
     return switcher.get(res, (640 * widthMultiplier, 480))
+
 
 def get_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
