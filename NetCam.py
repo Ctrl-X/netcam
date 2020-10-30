@@ -229,6 +229,8 @@ class NetCam:
                 self.networkFps.compute()
             currentTime = FpsCatcher.currentMilliTime()
             encoded, buffer = cv2.imencode('.jpg', self.imgBuffer[self.imgBufferReady])
+
+            self.console(f'buffer size : {len(buffer)/1024} ko')
             socket.send(buffer, copy=False)
             processTime = currentTime - initTime
             waitTime = 1
