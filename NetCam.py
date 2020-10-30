@@ -254,10 +254,8 @@ class NetCam:
         # socket.setsockopt(zmq.SUBSCRIBE, topicfilter)
 
         self.console(f'Connected To {url_publisher}')
-        timeout = 300*1000  # 300 sec before timeout
+        timeoutMsg = 0
         while self.isNetworkRunning:
-
-
             try:
                 buffer = socket.recv(flags=zmq.NOBLOCK, copy=False)
                 shape = [len(buffer.bytes), 1]
@@ -270,15 +268,18 @@ class NetCam:
                 self.imgBufferWriting = 0 if self.imgBufferWriting == NetCam.NBR_BUFFER - 1 else self.imgBufferWriting + 1
 
                 self.imgBuffer[self.imgBufferWriting] = cv2.imdecode(buffer, 1)
-                timeout = 3000
                 if self.displayDebug:
                     self.networkFps.compute()
+
+                if timeoutMsg >= 1000:  # 1 sec elapsed
+                    self.console(f'Re-Connected To {url_publisher}')
+                timeoutMsg = 0
+
             except Exception as err:
-                timeout -= 1
-                if timeout % 3000 == 0:
-                    self.console(f'Waiting image from {url_publisher} ({timeout/1000} sec. before abording) ...')
-                if timeout <= 0:
-                    self.isNetworkRunning = False
+                timeoutMsg += 1
+                if timeoutMsg >= 3000:   # 3 sec before writing timeout message
+                    self.console(f'Waiting image from {url_publisher} ...')
+                    timeoutMsg = 0
 
             time.sleep(0.001)
 
