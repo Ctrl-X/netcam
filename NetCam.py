@@ -236,7 +236,7 @@ class NetCam:
             # encoded, buffer = cv2.imencode('.jpg', np.empty(shape=(5, 5, 3), dtype=np.uint8))
             encoded, buffer = cv2.imencode('.jpg', self.imgBuffer[self.imgBufferReady])
 
-            bufferSize = len(buffer)/1024
+            bufferSize = len(buffer)/1024 * 8
             bufferSizeSec += bufferSize
             frameCount += 1
             self.console(f'buffer size : {bufferSize} ko')
@@ -248,7 +248,7 @@ class NetCam:
                 frameCount = 0
                 initTime = currentTime
 
-            socket.send(buffer, copy=False)
+            socket.send(buffer, copy=True)
             processTime = FpsCatcher.currentMilliTime() - currentTime
             waitTime = 1
             if processTime > 0 and processTime < 33:
