@@ -65,12 +65,12 @@ class NetCam:
         # Network information
         self.hostname = socket.gethostname()
         self.ip_address = ip
+        self.ip_port = port or NetCam.DEFAULT_CLIENT_PORT
         self.windowName = ip or self.hostname or NetCam.DEFAULT_WINDOW_NAME
         NetCam.WINDOW_COUNTER += 1
         if NetCam.WINDOW_COUNTER > 1:
             self.windowName += f' ({NetCam.WINDOW_COUNTER})'
 
-        self.ip_port = port or NetCam.DEFAULT_CLIENT_PORT
 
         self.threadList = []
 
@@ -124,14 +124,13 @@ class NetCam:
         videoThread = Thread(target=self.captureThreadRunner, args=([self.videoStream]), daemon=True)
         videoThread.start()
 
-    def startBroadcast(self, port=None):
+    def startBroadcast(self):
         """
             Launch the network client ( broadcast the camera signal)
         """
 
         ## Launch the networdThread
         self.ip_address = get_ip()
-        self.ip_port = port if port is not None else NetCam.DEFAULT_CLIENT_PORT
 
         self.console(f'Launch broadcast...')
         zmqContext = zmq.Context()
@@ -220,7 +219,7 @@ class NetCam:
         url_publish = "tcp://*:%s" % self.ip_port
         socket.bind(url_publish)
         self.isNetworkRunning = True
-        self.console('Network thread is now running ( ZMQ Publish )...', 1)
+        self.console(f'Network thread is now running ( {url_publish} )...', 1)
 
         # i = 0
         # topic = 1234
