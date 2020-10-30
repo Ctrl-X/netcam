@@ -234,7 +234,7 @@ class NetCam:
                 self.networkFps.compute()
             currentTime = FpsCatcher.currentMilliTime()
             # buffer = [1]
-            encoded, buffer = cv2.imencode('.jpg', [[0,0,0]])
+            encoded, buffer = cv2.imencode('.jpg', np.empty(shape=(5, 5, 3), dtype=np.uint8))
 
             bufferSize = len(buffer)/1024
             bufferSizeSec += bufferSize
