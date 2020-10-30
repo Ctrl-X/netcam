@@ -13,6 +13,7 @@ import cv2
 import base64
 import numpy as np
 import socket
+import pyguetzli
 
 
 class NetCam:
@@ -236,8 +237,16 @@ class NetCam:
             currentTime = FpsCatcher.currentMilliTime()
             # encoded, buffer = cv2.imencode('.jpg', np.empty(shape=(5, 5, 3), dtype=np.uint8))
             encoded, buffer = cv2.imencode('.jpg', self.imgBuffer[self.imgBufferReady])
-            result = cv2.imwrite("test.jpg",self.imgBuffer[self.imgBufferReady])
-            self.console(result)
+            # result = cv2.imwrite("test.jpg",self.imgBuffer[self.imgBufferReady])
+            # self.console(result)
+            # input_jpeg_bytes = open("test.jpg", "rb").read()
+
+            # imgBuffer = self.imgBuffer[self.imgBufferReady]
+            # imgBuffer = imgBuffer.ravel()
+            # optiTime = FpsCatcher.currentMilliTime()
+            # optibuffer = pyguetzli.process_jpeg_bytes(input_jpeg_bytes)
+            # self.imgBuffer[self.imgBufferReady] = buffer
+            # self.console(f'comrpession time: {FpsCatcher.currentMilliTime() - optiTime} milli')
             bufferSize = int(len(buffer)/1024)
             bufferSizeSec += bufferSize
             frameCount += 1
@@ -250,7 +259,7 @@ class NetCam:
                 frameCount = 0
                 initTime = currentTime
 
-            socket.send(buffer, copy=True)
+            socket.send(buffer, copy=False)
             processTime = FpsCatcher.currentMilliTime() - currentTime
             waitTime = 1
             if processTime > 0 and processTime < 33:
