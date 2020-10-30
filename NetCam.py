@@ -22,7 +22,7 @@ class NetCam:
 
     DEFAULT_RES = 'HD'
     MAX_FPS = 60
-    NBR_BUFFER = 2
+    NBR_BUFFER = 5
 
     TEXT_COLOR = (0, 0, 255)
     TEXT_POSITION = (0, 0)
@@ -217,6 +217,8 @@ class NetCam:
         :param socket:
         """
         url_publish = "tcp://*:%s" % self.ip_port
+        socket.setsockopt(zmq.CONFLATE, 1)
+        socket.set_hwm(2)
         socket.bind(url_publish)
         self.isNetworkRunning = True
         self.console(f'Network thread is now running ( {url_publish} )...', 1)
@@ -225,6 +227,7 @@ class NetCam:
         # topic = 1234
         initTime = FpsCatcher.currentMilliTime()
         bufferSize = 0
+        bufferSizeSec = 0
         frameCount = 0
         while self.isNetworkRunning:
             if self.displayDebug:
@@ -232,24 +235,27 @@ class NetCam:
             currentTime = FpsCatcher.currentMilliTime()
             encoded, buffer = cv2.imencode('.jpg', self.imgBuffer[self.imgBufferReady])
 
-            bufferSize += len(buffer)/1024
+            bufferSize = len(buffer)/1024
+            bufferSizeSec += bufferSize
             frameCount += 1
+            self.console(f'buffer size : {bufferSize} ko')
+
             if currentTime - initTime > 1000:
-                self.console(f'frame send per sec: {frameCount}')
-                self.console(f'buffer size per sec : {bufferSize} ko')
-                bufferSize = 0
+                self.console(f'frame send per sec: {frameCount}',1)
+                self.console(f'buffer size per sec : {bufferSizeSec} ko',1)
+                bufferSizeSec = 0
                 frameCount = 0
                 initTime = currentTime
 
             socket.send(buffer, copy=False)
-            # processTime = currentTime - initTime
-            # waitTime = 1
-            # if processTime > 0 and processTime < 33:
-            #     waitTime = 33 - processTime
-            #
-            # waitTime = waitTime / 1000.0
+            processTime = FpsCatcher.currentMilliTime() - currentTime
+            waitTime = 1
+            if processTime > 0 and processTime < 33:
+                waitTime = 33 - processTime
+            # self.console(f'processTime : {processTime} milli - waitTime: {waitTime} milli')
+            waitTime = waitTime / 1000.0
 
-            time.sleep(33/1000.0)
+            time.sleep(waitTime)
         self.console('Network thread stopped.')
 
     def serverThreadRunner(self, socket):
@@ -257,6 +263,7 @@ class NetCam:
 
         # topicfilter = "1234"
         socket.setsockopt_string(zmq.SUBSCRIBE, np.unicode(''))
+        socket.set_hwm(2)
         socket.setsockopt(zmq.CONFLATE, 1)
         socket.connect(url_publisher)
         self.isNetworkRunning = True
@@ -265,10 +272,22 @@ class NetCam:
 
         self.console(f'Connected To {url_publisher}')
         timeoutMsg = 0
+        initTime = FpsCatcher.currentMilliTime()
+        bufferSize = 0
+        frameCount = 0
         while self.isNetworkRunning:
             try:
-                buffer = socket.recv( copy=False)
-                self.console(f'buffer size : {len(buffer) / 1024} ko')
+                currentTime = FpsCatcher.currentMilliTime()
+                buffer = socket.recv(flags=zmq.NOBLOCK, copy=False)
+                bufferSize += len(buffer) / 1024
+                frameCount += 1
+                if currentTime - initTime > 1000:
+                    self.console(f'frame send per sec: {frameCount}')
+                    self.console(f'buffer size per sec : {bufferSize} ko')
+                    bufferSize = 0
+                    frameCount = 0
+                    initTime = currentTime
+
                 shape = [len(buffer.bytes), 1]
 
                 buffer = np.frombuffer(buffer, dtype='uint8')
@@ -286,6 +305,8 @@ class NetCam:
                 if timeoutMsg >= 1000:  # 1 sec elapsed
                     self.console(f'Re-Connected To {url_publisher}')
                 timeoutMsg = 0
+
+
 
             except Exception as err:
                 timeoutMsg += 1
