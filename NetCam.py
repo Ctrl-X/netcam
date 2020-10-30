@@ -256,7 +256,7 @@ class NetCam:
         timeoutMsg = 0
         while self.isNetworkRunning:
             try:
-                buffer = socket.recv(flags=zmq.NOBLOCK, copy=False)
+                buffer = socket.recv( copy=False)
                 shape = [len(buffer.bytes), 1]
 
                 buffer = np.frombuffer(buffer, dtype='uint8')
