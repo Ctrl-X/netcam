@@ -224,23 +224,32 @@ class NetCam:
         # i = 0
         # topic = 1234
         initTime = FpsCatcher.currentMilliTime()
+        bufferSize = 0
+        frameCount = 0
         while self.isNetworkRunning:
             if self.displayDebug:
                 self.networkFps.compute()
             currentTime = FpsCatcher.currentMilliTime()
             encoded, buffer = cv2.imencode('.jpg', self.imgBuffer[self.imgBufferReady])
 
-            self.console(f'buffer size : {len(buffer)/1024} ko')
-            socket.send(buffer, copy=False)
-            processTime = currentTime - initTime
-            waitTime = 1
-            if processTime > 0 and processTime < 33:
-                waitTime = 33 - processTime
+            bufferSize += len(buffer)/1024
+            frameCount += 1
+            if currentTime - initTime > 1000:
+                bufferSize = 0
+                frameCount = 0
+                initTime = currentTime
+                self.console(f'frame send per sec: {frameCount}')
+                self.console(f'buffer size per sec : {bufferSize} ko')
 
-            waitTime = waitTime / 1000.0
+            socket.send(buffer, copy=False)
+            # processTime = currentTime - initTime
+            # waitTime = 1
+            # if processTime > 0 and processTime < 33:
+            #     waitTime = 33 - processTime
+            #
+            # waitTime = waitTime / 1000.0
 
             time.sleep(33/1000.0)
-            initTime = currentTime
         self.console('Network thread stopped.')
 
     def serverThreadRunner(self, socket):
@@ -259,6 +268,7 @@ class NetCam:
         while self.isNetworkRunning:
             try:
                 buffer = socket.recv( copy=False)
+                self.console(f'buffer size : {len(buffer) / 1024} ko')
                 shape = [len(buffer.bytes), 1]
 
                 buffer = np.frombuffer(buffer, dtype='uint8')
@@ -269,6 +279,7 @@ class NetCam:
                 self.imgBufferWriting = 0 if self.imgBufferWriting == NetCam.NBR_BUFFER - 1 else self.imgBufferWriting + 1
 
                 self.imgBuffer[self.imgBufferWriting] = cv2.imdecode(buffer, 1)
+
                 if self.displayDebug:
                     self.networkFps.compute()
 
