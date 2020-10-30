@@ -235,11 +235,11 @@ class NetCam:
             bufferSize += len(buffer)/1024
             frameCount += 1
             if currentTime - initTime > 1000:
+                self.console(f'frame send per sec: {frameCount}')
+                self.console(f'buffer size per sec : {bufferSize} ko')
                 bufferSize = 0
                 frameCount = 0
                 initTime = currentTime
-                self.console(f'frame send per sec: {frameCount}')
-                self.console(f'buffer size per sec : {bufferSize} ko')
 
             socket.send(buffer, copy=False)
             # processTime = currentTime - initTime
