@@ -237,7 +237,7 @@ class NetCam:
 
             waitTime = waitTime / 1000.0
 
-            time.sleep(waitTime)
+            time.sleep(33/1000.0)
             initTime = currentTime
         self.console('Network thread stopped.')
 
