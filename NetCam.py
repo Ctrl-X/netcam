@@ -13,7 +13,7 @@ import cv2
 import base64
 import numpy as np
 import socket
-import pyguetzli
+# import pyguetzli
 
 
 class NetCam:
